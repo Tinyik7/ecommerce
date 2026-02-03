@@ -1,0 +1,20 @@
+package com.echoes.flutterbackend.config;
+
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+@Configuration
+public class WebConfig implements WebMvcConfigurer {
+
+    @Override
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        // Путь к папке uploads
+        String uploadPath = System.getProperty("user.dir") + "/uploads/";
+
+        registry.addResourceHandler("/uploads/**")
+                .addResourceLocations("file:" + uploadPath)
+                .setCachePeriod(3600);
+    }
+}
