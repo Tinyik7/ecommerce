@@ -56,3 +56,8 @@ erDiagram
 - **API**: Postman-скрипты для CRUD-операций (`docs/postman/...`).  
 - **Логи Hibernate** (`spring.jpa.show-sql=true`) — позволяют видеть фактические запросы при защите.  
 - **Manual QA**: сценарии в `docs/testing.md` включают добавление/удаление товаров, проверку офлайн-кеша и повторное подключение.
+
+## 8. Seed-данные
+
+- Админ-пользователь создается при старте, если `APP_ADMIN_SEED_ENABLED=true`.
+- Тестовые товары создаются при старте, если `APP_PRODUCTS_SEED_ENABLED=true` и таблица `products` пуста.

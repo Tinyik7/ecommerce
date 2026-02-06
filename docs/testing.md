@@ -32,4 +32,12 @@
 - During defense demonstrate offline operation, catalog filters, and admin CRUD.  
 - Show Postman scripts and SQLite cache (`ecommerce_cache.db`) as evidence for API/DB tests. 
 
+### 4. Security / Seeds (Backend)
+
+- `POST /api/v1/products` without `ADMIN` token -> `403 Forbidden`.
+- `PUT /api/v1/users/{id}/role` without `ADMIN` token -> `403 Forbidden`.
+- `GET /api/v1/cart/{userId}` with mismatched token user -> `403 Forbidden`.
+- If `APP_ADMIN_SEED_ENABLED=true`, login with admin credentials.
+- If `APP_PRODUCTS_SEED_ENABLED=true`, verify initial products exist.
+
 

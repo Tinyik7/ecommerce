@@ -73,6 +73,20 @@ class ProfileDetailView extends GetView<ProfileDetailController> {
                     title: 'Создан',
                     value: user.createdAt!,
                   ),
+                12.verticalSpace,
+                _ActionButton(
+                  title: 'Редактировать профиль',
+                  icon: Icons.edit,
+                  onTap: () => _openEditProfile(context, c),
+                  isLoading: c.isSaving,
+                ),
+                12.verticalSpace,
+                _ActionButton(
+                  title: 'Сменить пароль',
+                  icon: Icons.lock,
+                  onTap: () => _openChangePassword(context, c),
+                  isLoading: c.isChangingPassword,
+                ),
                 20.verticalSpace,
                 Text(
                   'Свайпните вниз, чтобы обновить данные из сервера.',
@@ -126,4 +140,197 @@ class _InfoTile extends StatelessWidget {
       ),
     );
   }
+}
+
+class _ActionButton extends StatelessWidget {
+  const _ActionButton({
+    required this.title,
+    required this.icon,
+    required this.onTap,
+    required this.isLoading,
+  });
+
+  final String title;
+  final IconData icon;
+  final VoidCallback onTap;
+  final bool isLoading;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton.icon(
+        onPressed: isLoading ? null : onTap,
+        icon: isLoading
+            ? const SizedBox(
+                height: 18,
+                width: 18,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : Icon(icon),
+        label: Text(title),
+      ),
+    );
+  }
+}
+
+void _openEditProfile(BuildContext context, ProfileDetailController controller) {
+  final user = controller.user;
+  final nameCtrl = TextEditingController(text: user?.name ?? '');
+  final usernameCtrl = TextEditingController(text: user?.username ?? '');
+  final emailCtrl = TextEditingController(text: user?.email ?? '');
+  final formKey = GlobalKey<FormState>();
+
+  String? validateEmail(String? value) {
+    if (value == null || value.trim().isEmpty) return null;
+    final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+    if (!emailRegex.hasMatch(value.trim())) return 'Некорректный email';
+    return null;
+  }
+
+  Get.bottomSheet(
+    backgroundColor: context.theme.scaffoldBackgroundColor,
+    isScrollControlled: true,
+    Padding(
+      padding: EdgeInsets.only(
+        left: 20.w,
+        right: 20.w,
+        top: 24.h,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 24.h,
+      ),
+      child: Form(
+        key: formKey,
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Редактировать профиль',
+                  style: context.textTheme.titleLarge),
+              16.verticalSpace,
+              TextFormField(
+                controller: usernameCtrl,
+                decoration: const InputDecoration(labelText: 'Имя пользователя'),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) return null;
+                  if (value.trim().length < 3) return 'Минимум 3 символа';
+                  return null;
+                },
+              ),
+              12.verticalSpace,
+              TextFormField(
+                controller: nameCtrl,
+                decoration: const InputDecoration(labelText: 'Имя'),
+              ),
+              12.verticalSpace,
+              TextFormField(
+                controller: emailCtrl,
+                decoration: const InputDecoration(labelText: 'Email'),
+                validator: validateEmail,
+              ),
+              20.verticalSpace,
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: controller.isSaving
+                      ? null
+                      : () async {
+                          if (!(formKey.currentState?.validate() ?? false)) {
+                            return;
+                          }
+                          await controller.updateProfile(
+                            username: usernameCtrl.text,
+                            email: emailCtrl.text,
+                            name: nameCtrl.text,
+                          );
+                          if (!controller.isSaving) {
+                            Get.back();
+                          }
+                        },
+                  child: const Text('Сохранить'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+void _openChangePassword(
+    BuildContext context, ProfileDetailController controller) {
+  final currentCtrl = TextEditingController();
+  final newCtrl = TextEditingController();
+  final formKey = GlobalKey<FormState>();
+
+  Get.bottomSheet(
+    backgroundColor: context.theme.scaffoldBackgroundColor,
+    isScrollControlled: true,
+    Padding(
+      padding: EdgeInsets.only(
+        left: 20.w,
+        right: 20.w,
+        top: 24.h,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 24.h,
+      ),
+      child: Form(
+        key: formKey,
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Сменить пароль', style: context.textTheme.titleLarge),
+              16.verticalSpace,
+              TextFormField(
+                controller: currentCtrl,
+                obscureText: true,
+                decoration:
+                    const InputDecoration(labelText: 'Текущий пароль'),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Введите текущий пароль';
+                  }
+                  return null;
+                },
+              ),
+              12.verticalSpace,
+              TextFormField(
+                controller: newCtrl,
+                obscureText: true,
+                decoration: const InputDecoration(labelText: 'Новый пароль'),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Введите новый пароль';
+                  }
+                  if (value.length < 6) return 'Минимум 6 символов';
+                  return null;
+                },
+              ),
+              20.verticalSpace,
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: controller.isChangingPassword
+                      ? null
+                      : () async {
+                          if (!(formKey.currentState?.validate() ?? false)) {
+                            return;
+                          }
+                          await controller.changePassword(
+                            currentPassword: currentCtrl.text,
+                            newPassword: newCtrl.text,
+                          );
+                          if (!controller.isChangingPassword) {
+                            Get.back();
+                          }
+                        },
+                  child: const Text('Обновить пароль'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
 }

@@ -120,6 +120,76 @@ class AuthService {
 
     return null;
   }
+
+  Future<UserModel> updateProfile({
+    String? username,
+    String? email,
+    String? name,
+  }) async {
+    final Uri uri = Uri.parse('$_baseUrl/me');
+    final Map<String, dynamic> payload = <String, dynamic>{};
+    if (username != null && username.trim().isNotEmpty) {
+      payload['username'] = username.trim();
+    }
+    if (email != null && email.trim().isNotEmpty) {
+      payload['email'] = email.trim();
+    }
+    if (name != null && name.trim().isNotEmpty) {
+      payload['name'] = name.trim();
+    }
+
+    final http.Response res = await http.put(
+      uri,
+      headers: ApiClient.authHeaders(),
+      body: jsonEncode(payload),
+    );
+
+    if (res.statusCode == 401) {
+      ApiClient.handleUnauthorized();
+      throw UnauthorizedException();
+    }
+    if (res.statusCode == 409) {
+      throw AuthConflictException(res.body);
+    }
+    if (res.statusCode == 200 && res.body.isNotEmpty) {
+      final dynamic decoded = jsonDecode(res.body);
+      if (decoded is Map<String, dynamic>) {
+        return UserModel.fromJson(decoded);
+      }
+    }
+
+    final String body = res.body.isNotEmpty ? res.body : 'Update failed';
+    throw Exception('HTTP ${res.statusCode}: $body');
+  }
+
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final Uri uri = Uri.parse('$_baseUrl/me/password');
+    final http.Response res = await http.put(
+      uri,
+      headers: ApiClient.authHeaders(),
+      body: jsonEncode(<String, dynamic>{
+        'currentPassword': currentPassword,
+        'newPassword': newPassword,
+      }),
+    );
+
+    if (res.statusCode == 401) {
+      ApiClient.handleUnauthorized();
+      throw UnauthorizedException();
+    }
+    if (res.statusCode == 400) {
+      throw InvalidCurrentPasswordException();
+    }
+    if (res.statusCode == 200) {
+      return;
+    }
+
+    final String body = res.body.isNotEmpty ? res.body : 'Password update failed';
+    throw Exception('HTTP ${res.statusCode}: $body');
+  }
 }
 
 class LoginResult {
@@ -139,5 +209,7 @@ class AuthConflictException implements Exception {
 }
 
 class UnauthorizedException implements Exception {}
+
+class InvalidCurrentPasswordException implements Exception {}
 
 

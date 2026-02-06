@@ -8,6 +8,8 @@ import '../../settings/controllers/settings_controller.dart';
 class ProfileDetailController extends GetxController {
   UserModel? user;
   bool isLoading = false;
+  bool isSaving = false;
+  bool isChangingPassword = false;
 
   @override
   void onInit() {
@@ -42,6 +44,61 @@ class ProfileDetailController extends GetxController {
       // ignore network errors silently; cached data already shown
     } finally {
       isLoading = false;
+      update();
+    }
+  }
+
+  Future<void> updateProfile({
+    String? username,
+    String? email,
+    String? name,
+  }) async {
+    try {
+      isSaving = true;
+      update();
+      final updated = await AuthService.instance.updateProfile(
+        username: username,
+        email: email,
+        name: name,
+      );
+      user = updated;
+      await MySharedPref.setString('user_name', updated.username);
+      await MySharedPref.setString('user_email', updated.email);
+      if (updated.role != null) {
+        await MySharedPref.setUserRole(updated.role!);
+      }
+      _syncSettingsController(updated);
+      Get.snackbar('Готово', 'Профиль обновлён');
+    } on AuthConflictException catch (e) {
+      Get.snackbar('Ошибка', e.message);
+    } catch (e) {
+      Get.snackbar('Ошибка', e.toString());
+    } finally {
+      isSaving = false;
+      update();
+    }
+  }
+
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    try {
+      isChangingPassword = true;
+      update();
+      await AuthService.instance.changePassword(
+        currentPassword: currentPassword,
+        newPassword: newPassword,
+      );
+      Get.snackbar('Готово', 'Пароль обновлён');
+    } on InvalidCurrentPasswordException {
+      Get.snackbar('Ошибка', 'Неверный текущий пароль');
+    } on UnauthorizedException {
+      Get.snackbar('Ошибка', 'Сессия истекла, войдите заново');
+    } catch (e) {
+      Get.snackbar('Ошибка', e.toString());
+    } finally {
+      isChangingPassword = false;
       update();
     }
   }

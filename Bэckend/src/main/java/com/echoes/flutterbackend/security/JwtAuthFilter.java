@@ -5,6 +5,8 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
@@ -33,22 +35,22 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         if (header != null && header.startsWith("Bearer ")) {
             String token = header.substring(7);
 
-            // ✅ Проверяем валидность токена
             if (jwtTokenProvider.validateToken(token)) {
                 String email = jwtTokenProvider.getUsernameFromToken(token);
+                String role = jwtTokenProvider.getRoleFromToken(token);
 
-                // ✅ Создаём объект аутентификации без ролей
+                java.util.Collection<? extends GrantedAuthority> authorities = role == null || role.isBlank()
+                        ? Collections.<GrantedAuthority>emptyList()
+                        : Collections.<GrantedAuthority>singletonList(new SimpleGrantedAuthority("ROLE_" + role));
+
                 UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(email, null, Collections.emptyList());
+                        new UsernamePasswordAuthenticationToken(email, null, authorities);
 
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-                // ✅ Устанавливаем контекст безопасности
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         }
 
-        // Продолжаем цепочку фильтров
         filterChain.doFilter(request, response);
     }
 }

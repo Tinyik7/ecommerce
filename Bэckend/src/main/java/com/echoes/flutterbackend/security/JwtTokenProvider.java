@@ -26,12 +26,20 @@ public class JwtTokenProvider {
     }
 
     public String generateAccessToken(String email) {
-        return Jwts.builder()
+        return generateAccessToken(email, null);
+    }
+
+    public String generateAccessToken(String email, String role) {
+        JwtBuilder builder = Jwts.builder()
                 .setSubject(email)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + jwtAccessExpirationMs))
-                .signWith(key, SignatureAlgorithm.HS256)
-                .compact();
+                .setExpiration(new Date(System.currentTimeMillis() + jwtAccessExpirationMs));
+
+        if (role != null && !role.isBlank()) {
+            builder.claim("role", role);
+        }
+
+        return builder.signWith(key, SignatureAlgorithm.HS256).compact();
     }
 
     public String generateRefreshToken(String email) {
@@ -50,6 +58,16 @@ public class JwtTokenProvider {
                 .parseClaimsJws(token)
                 .getBody()
                 .getSubject();
+    }
+
+    public String getRoleFromToken(String token) {
+        Object role = Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .get("role");
+        return role == null ? null : role.toString();
     }
 
     public boolean validateToken(String token) {
