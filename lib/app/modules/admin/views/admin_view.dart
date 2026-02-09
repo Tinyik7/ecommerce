@@ -75,10 +75,24 @@ class AdminView extends GetView<AdminController> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _openProductSheet(context),
-        icon: const Icon(Icons.add),
-        label: const Text('New product'),
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          FloatingActionButton.extended(
+            heroTag: 'change-role-fab',
+            onPressed: () => _openRoleSheet(context),
+            icon: const Icon(Icons.admin_panel_settings),
+            label: const Text('Change role'),
+          ),
+          10.verticalSpace,
+          FloatingActionButton.extended(
+            heroTag: 'new-product-fab',
+            onPressed: () => _openProductSheet(context),
+            icon: const Icon(Icons.add),
+            label: const Text('New product'),
+          ),
+        ],
       ),
     );
   }
@@ -328,6 +342,101 @@ class AdminView extends GetView<AdminController> {
                     ),
                   ],
                 ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  void _openRoleSheet(BuildContext context) {
+    final TextEditingController userIdCtrl = TextEditingController();
+    String selectedRole = 'USER';
+    final GlobalKey<FormState> formKey = GlobalKey<FormState>();
+
+    Get.bottomSheet(
+      backgroundColor: context.theme.scaffoldBackgroundColor,
+      isScrollControlled: true,
+      StatefulBuilder(
+        builder: (context, setState) {
+          return Padding(
+            padding: EdgeInsets.only(
+              left: 20.w,
+              right: 20.w,
+              top: 24.h,
+              bottom: MediaQuery.of(context).viewInsets.bottom + 24.h,
+            ),
+            child: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Change user role', style: context.textTheme.titleLarge),
+                  16.verticalSpace,
+                  TextFormField(
+                    controller: userIdCtrl,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(labelText: 'User ID'),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Enter user id';
+                      }
+                      if (int.tryParse(value.trim()) == null) {
+                        return 'User id must be a number';
+                      }
+                      return null;
+                    },
+                  ),
+                  12.verticalSpace,
+                  DropdownButtonFormField<String>(
+                    value: selectedRole,
+                    items: const [
+                      DropdownMenuItem(value: 'USER', child: Text('USER')),
+                      DropdownMenuItem(value: 'ADMIN', child: Text('ADMIN')),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() => selectedRole = value);
+                      }
+                    },
+                    decoration: const InputDecoration(labelText: 'Role'),
+                  ),
+                  20.verticalSpace,
+                  GetBuilder<AdminController>(
+                    builder: (c) => SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: c.isChangingRole
+                            ? null
+                            : () async {
+                                if (!(formKey.currentState?.validate() ??
+                                    false)) {
+                                  return;
+                                }
+                                final userId = int.parse(userIdCtrl.text.trim());
+                                try {
+                                  await controller.changeUserRole(
+                                    userId: userId,
+                                    role: selectedRole,
+                                  );
+                                  if (Get.isBottomSheetOpen ?? false) {
+                                    Get.back();
+                                  }
+                                } catch (_) {}
+                              },
+                        child: c.isChangingRole
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Text('Update role'),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           );

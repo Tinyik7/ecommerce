@@ -9,9 +9,11 @@ import '../../../data/services/api_client.dart';
 class AdminController extends GetxController {
   final List<ProductModel> products = <ProductModel>[];
   final String baseUrl = 'http://localhost:8080/api/v1/products';
+  final String usersUrl = 'http://localhost:8080/api/v1/users';
 
   bool isLoading = false;
   bool isSubmitting = false;
+  bool isChangingRole = false;
 
   @override
   void onInit() {
@@ -162,6 +164,40 @@ class AdminController extends GetxController {
       Get.snackbar('РћС€РёР±РєР°', 'РќРµ СѓРґР°Р»РѕСЃСЊ СѓРґР°Р»РёС‚СЊ: $e');
     } finally {
       isSubmitting = false;
+      update();
+    }
+  }
+
+  Future<void> changeUserRole({
+    required int userId,
+    required String role,
+  }) async {
+    try {
+      isChangingRole = true;
+      update();
+
+      final normalized = role.trim().toUpperCase();
+      if (normalized != 'ADMIN' && normalized != 'USER') {
+        throw Exception('Role must be ADMIN or USER');
+      }
+
+      final response = await http.put(
+        Uri.parse('$usersUrl/$userId/role'),
+        headers: ApiClient.authHeaders(),
+        body: jsonEncode({'role': normalized}),
+      );
+
+      if (response.statusCode == 200) {
+        Get.snackbar('Done', 'User role updated to $normalized');
+        return;
+      }
+
+      throw Exception('HTTP ${response.statusCode}: ${response.body}');
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to change role: $e');
+      rethrow;
+    } finally {
+      isChangingRole = false;
       update();
     }
   }

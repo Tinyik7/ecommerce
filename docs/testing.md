@@ -1,43 +1,62 @@
-﻿## Test Checklist
+## Test Checklist
 
 ### 1. Mobile App
 
 | Scenario | Steps | Expected Result |
 | --- | --- | --- |
 | Authorization | Enter valid email/password, sign in | Snackbar confirms success, user lands on BaseView, token saved in SharedPreferences. |
-| Theme switcher | Settings в†’ toggle dark mode | Theme switches instantly and persists after restart. |
-| Offline catalog | Turn off network в†’ open app в†’ browse catalog | Offline banner appears, products load from SQLite cache, filters still work locally. |
-| Offline cart | Disable network в†’ add product в†’ restart | Product remains in cart (read from cache), total is correct. |
-| Favorites | Tap heart on product в†’ open Favorites tab | Item displayed, untapping removes it. |
+| Theme switcher | Settings -> toggle dark mode | Theme switches instantly and persists after restart. |
+| Offline catalog | Turn off network -> open app -> browse catalog | Offline banner appears, products load from SQLite cache, filters still work locally. |
+| Offline cart | Disable network -> add product -> restart | Product remains in cart (read from cache), total is correct. |
+| Favorites | Tap heart on product -> open Favorites tab | Item displayed, untapping removes it. |
+| Profile update | Open Profile -> Edit profile -> Save | Updated username/email/name is persisted and shown in Profile and Settings. |
+| Password update | Open Profile -> Change password | Password changes when current password is correct. |
 
 ### 2. API / Backend
 
-1. Run `./mvnw -f backend/pom.xml spring-boot:run` (JDK 17 + PostgreSQL required).  
-2. Open `http://localhost:8080/swagger` to verify endpoints.  
-3. Import `docs/postman/ecommerce_api.postman_collection.json` and execute:
-   - Registration / Login (Postman script stores JWT in environment).  
-   - Product CRUD with filters (`query`, `minPrice`, `category`).  
-   - Favorites and Cart flows (add/update/delete items).  
-4. Test file upload (`POST /products/with-image`):
-   - `form-data`: `product` (JSON string), `image` (file).  
-   - After request ensure file appears under `/uploads` and accessible via `http://localhost:8080/uploads/<name>`.
-5. Error handling checks:
-   - Duplicate email в†’ `409 Conflict`.  
-   - `/me` without token в†’ `401 Unauthorized`.  
-   - Update/delete non-existent product в†’ `404 Not Found`.
+1. Run backend:
+   - Local: `./mvnw spring-boot:run`
+   - Docker: `docker compose up --build -d`
+2. Open `http://localhost:8080/swagger`.
+3. Verify auth and user endpoints:
+   - Register/login
+   - `GET /api/v1/users/me`
+   - `PUT /api/v1/users/me`
+   - `PUT /api/v1/users/me/password`
+4. Verify catalog/cart/favorites:
+   - Product CRUD + filters
+   - Favorites add/remove/list
+   - Cart add/update/remove/list
+5. Verify security:
+   - `POST /api/v1/products` without ADMIN -> `403`.
+   - `PUT /api/v1/users/{id}/role` without ADMIN -> `403`.
+   - `GET /api/v1/cart/{userId}` with mismatched token user -> `403`.
 
-### 3. Documentation / Demo
+### 3. Automated Tests
 
-- Update presentation with screenshots of the new filters, admin panel, and profile detail flow (`docs/project_overview.md`).  
-- During defense demonstrate offline operation, catalog filters, and admin CRUD.  
-- Show Postman scripts and SQLite cache (`ecommerce_cache.db`) as evidence for API/DB tests. 
+- Command: `./mvnw test`
+- Current status:
+  - Last run: `2026-02-09`, `BUILD SUCCESS`, `Tests run: 4, Failures: 0, Errors: 0`.
+  - `BackendApplicationTests` uses `test` profile (H2 in-memory DB).
+  - `UserServiceTests` and `ProductServiceTests` cover core business flows.
+  - Legacy unrelated test package was removed to avoid false failures.
 
-### 4. Security / Seeds (Backend)
+### 4. Seed Verification
 
-- `POST /api/v1/products` without `ADMIN` token -> `403 Forbidden`.
-- `PUT /api/v1/users/{id}/role` without `ADMIN` token -> `403 Forbidden`.
-- `GET /api/v1/cart/{userId}` with mismatched token user -> `403 Forbidden`.
-- If `APP_ADMIN_SEED_ENABLED=true`, login with admin credentials.
-- If `APP_PRODUCTS_SEED_ENABLED=true`, verify initial products exist.
+- Admin seed:
+  - Enable `APP_ADMIN_SEED_ENABLED=true`
+  - Login with `APP_ADMIN_EMAIL` / `APP_ADMIN_PASSWORD`
+- Product seed:
+  - Enable `APP_PRODUCTS_SEED_ENABLED=true`
+  - Ensure initial catalog appears on fresh database
 
+### 5. E2E Role Scenarios
 
+1. Login as `USER`:
+   - Can browse products.
+   - Cannot create/update/delete product (`403`).
+2. Login as `ADMIN`:
+   - Can perform product CRUD.
+   - Can update user role via admin endpoint or admin UI role form.
+3. Token isolation:
+   - Accessing another user's cart/favorites with valid token returns `403`.

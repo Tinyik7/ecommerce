@@ -1,63 +1,70 @@
-## 1. Технологии
+## 1. Stack
 
-- **PostgreSQL** — основная БД, `spring.jpa.hibernate.ddl-auto=update`.  
-- **Flyway/миграции** не подключались (можно добавить позже), структура описана ниже.  
-- **SQLite (sqflite)** — локальный кеш в приложении (`local_database_service.dart`).
+- `PostgreSQL` is the primary backend database.
+- `Spring Data JPA` manages entities and repositories.
+- `SQLite (sqflite)` is used in Flutter as an offline cache (`local_database_service.dart`).
 
-## 2. ER-диаграмма (логическая)
+## 2. Logical ER Model
 
 ```mermaid
 erDiagram
     USERS ||--o{ CARTS : owns
     USERS ||--o{ FAVORITES : marks
     CARTS ||--o{ CART_ITEMS : contains
-    PRODUCTS ||--o{ CART_ITEMS : "referenced via productId"
-    PRODUCTS ||--o{ FAVORITES : "referenced via productId"
+    PRODUCTS ||--o{ CART_ITEMS : linked_by_product_id
+    PRODUCTS ||--o{ FAVORITES : linked_by_product_id
 ```
 
-### Таблицы
+## 3. Main Tables
 
-| Таблица | Ключевые поля |
+| Table | Key fields |
 | --- | --- |
-| `users` | `id`, `name`, `email (unique)`, `password` (bcrypt) |
-| `products` | `id`, `name`, `description`, `price`, `rating`, `category`, `image`, `featured`, `discount`, `in_stock`, `created_at`, `updated_at` |
+| `users` | `id`, `username`, `email`, `password`, `role`, `name` |
+| `products` | `id`, `name`, `description`, `price`, `quantity`, `category`, `image`, `rating`, `created_at`, `updated_at`, `in_stock` |
 | `favorites` | `id`, `user_id`, `product_id` |
 | `carts` | `id`, `user_id` |
 | `cart_items` | `id`, `cart_id`, `product_id`, `quantity` |
 
-## 3. CRUD-операции
+## 4. Data Operations
 
-- **Products** — полный CRUD + фильтры/сортировки (см. `ProductService`, `ProductSpecifications`).  
-- **Favorites** — `FavoriteService` предотвращает дубли по `userId/productId`, возвращает готовые `ProductResponse`.  
-- **Cart** — `CartService` формирует DTO с товарами и суммой, все эндпоинты возвращают актуальное состояние корзины.  
-- **Users** — регистрация/логин/удаление (опционально) с валидацией уникальности почты.
+- Products: full CRUD with filtering/sorting (`ProductService`, `ProductSpecifications`).
+- Favorites: add/remove product by `userId + productId` (`FavoriteService`).
+- Cart: add/update/remove items and calculate total (`CartService`).
+- Users: register/login/profile update/password change/role change.
 
-## 4. Валидация и ошибки
+## 5. Validation and Errors
 
-- `ProductRequest` помечен `@NotBlank`, `@Min` и т.д.  
-- `GlobalExceptionHandler` приводит ошибки к формату `{ status, message, details, timestamp }`.  
-- Конфликты email → `409 Conflict`. Отсутствующие сущности → `404`. Невалидные данные → `400`.
+- DTO validation uses `jakarta.validation` annotations.
+- `GlobalExceptionHandler` returns unified error response:
+  `{ status, message, details, timestamp }`.
+- Common statuses:
+  - `400` invalid input
+  - `401` missing or invalid token
+  - `403` forbidden action (RBAC/user mismatch)
+  - `404` not found
+  - `409` conflict (email/username already exists)
 
-## 5. Локальная БД (Flutter)
+## 6. Security and Access Rules
 
-- Файл `local_database_service.dart` создаёт три таблицы: `products`, `cart_items`, `favorites`.  
-- Использование:
-  - При успешной загрузке каталога вызываем `cacheProducts`.
-  - При работе офлайн читаем товары/корзину из SQLite.
-  - Избранное синхронизируется локально, чтобы отображать сердечки без запроса к серверу.
+- JWT is used for authentication.
+- Role-based checks:
+  - Product write operations (`POST/PUT/DELETE`) are `ADMIN` only.
+  - User role update endpoint is `ADMIN` only.
+- User isolation checks:
+  - Cart and favorites endpoints verify `path userId == token userId`.
 
-## 6. Поиск, фильтрация, сортировка
+## 7. Seed Data
 
-- На бэкенде — `JpaSpecificationExecutor` с фильтрами `query`, `category`, `minPrice`, `maxPrice`, `minRating`, `inStock`, `onlyFavorites`.
-- На фронте — дополнительная фильтрация + сортировки (`HomeController`), чтобы не показывать устаревшие данные из кеша.
+- Admin seed:
+  - Enabled by `APP_ADMIN_SEED_ENABLED=true`.
+  - Configurable by `APP_ADMIN_EMAIL`, `APP_ADMIN_PASSWORD`, `APP_ADMIN_USERNAME`.
+- Product seed:
+  - Enabled by `APP_PRODUCTS_SEED_ENABLED=true`.
+  - Inserts demo products only when `products` table is empty.
 
-## 7. Тестирование БД
+## 8. Flutter Offline Cache
 
-- **API**: Postman-скрипты для CRUD-операций (`docs/postman/...`).  
-- **Логи Hibernate** (`spring.jpa.show-sql=true`) — позволяют видеть фактические запросы при защите.  
-- **Manual QA**: сценарии в `docs/testing.md` включают добавление/удаление товаров, проверку офлайн-кеша и повторное подключение.
-
-## 8. Seed-данные
-
-- Админ-пользователь создается при старте, если `APP_ADMIN_SEED_ENABLED=true`.
-- Тестовые товары создаются при старте, если `APP_PRODUCTS_SEED_ENABLED=true` и таблица `products` пуста.
+- Local SQLite tables: `products`, `cart_items`, `favorites`.
+- App behavior:
+  - On successful sync, data is cached.
+  - On network failure, catalog/cart/favorites are loaded from local cache.
