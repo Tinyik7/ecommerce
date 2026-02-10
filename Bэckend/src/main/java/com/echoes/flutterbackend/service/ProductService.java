@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -23,6 +24,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.UUID;
 
 @Service
+@Transactional(readOnly = true)
 public class ProductService {
     private final ProductRepository repository;
     private final Path uploadDirectory;
@@ -47,6 +49,7 @@ public class ProductService {
         return ProductMapper.toResponse(product);
     }
 
+    @Transactional
     public ProductResponse create(ProductRequest request, MultipartFile image) throws IOException {
         Product product = new Product();
         ProductMapper.updateEntity(product, request);
@@ -57,6 +60,7 @@ public class ProductService {
         return ProductMapper.toResponse(saved);
     }
 
+    @Transactional
     public ProductResponse update(Long id, ProductRequest request, MultipartFile image) throws IOException {
         Product product = repository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Product not found: " + id));
@@ -70,6 +74,7 @@ public class ProductService {
         return ProductMapper.toResponse(updated);
     }
 
+    @Transactional
     public void delete(Long id) {
         if (!repository.existsById(id)) {
             throw new EntityNotFoundException("Product not found: " + id);

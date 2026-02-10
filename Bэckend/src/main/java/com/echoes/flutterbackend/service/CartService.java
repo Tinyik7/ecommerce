@@ -13,6 +13,7 @@ import com.echoes.flutterbackend.repository.CartRepository;
 import com.echoes.flutterbackend.repository.ProductRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
@@ -20,6 +21,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional(readOnly = true)
 public class CartService {
 
     private final CartRepository cartRepository;
@@ -38,6 +40,7 @@ public class CartService {
         return toResponse(getOrCreateCart(userId));
     }
 
+    @Transactional
     public CartResponse addItem(Long userId, Long productId, Integer quantity) {
         Cart cart = getOrCreateCart(userId);
 
@@ -56,6 +59,7 @@ public class CartService {
         return toResponse(cartRepository.findById(cart.getId()).orElse(cart));
     }
 
+    @Transactional
     public CartResponse updateItemQuantity(Long userId, Long productId, Integer quantity) {
         Cart cart = getOrCreateCart(userId);
         if (cart.getItems() == null) {
@@ -70,6 +74,7 @@ public class CartService {
         return toResponse(getOrCreateCart(userId));
     }
 
+    @Transactional
     public CartResponse removeProductFromCart(Long userId, Long productId) {
         Cart cart = getOrCreateCart(userId);
         if (cart.getItems() != null) {
@@ -79,6 +84,7 @@ public class CartService {
         return toResponse(getOrCreateCart(userId));
     }
 
+    @Transactional
     public CartResponse removeItem(Long itemId) {
         CartItem item = cartItemRepository.findById(itemId)
                 .orElseThrow(() -> new EntityNotFoundException("Cart item not found: " + itemId));
@@ -87,6 +93,7 @@ public class CartService {
         return toResponse(getOrCreateCart(userId));
     }
 
+    @Transactional
     public CartResponse clearCart(Long userId) {
         Cart cart = getOrCreateCart(userId);
         if (cart.getItems() != null) {
@@ -96,6 +103,7 @@ public class CartService {
         return toResponse(getOrCreateCart(userId));
     }
 
+    @Transactional
     private Cart getOrCreateCart(Long userId) {
         return cartRepository.findByUserId(userId)
                 .orElseGet(() -> {

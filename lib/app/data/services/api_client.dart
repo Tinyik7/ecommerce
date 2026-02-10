@@ -37,6 +37,7 @@ class ApiClient {
     return _send(
       () => http.get(uri, headers: headers ?? authHeaders()),
       redirectOnUnauthorized: redirectOnUnauthorized,
+      retriesOnTimeoutOrNetwork: 1,
     );
   }
 
@@ -79,31 +80,42 @@ class ApiClient {
   static Future<http.Response> _send(
     Future<http.Response> Function() request, {
     required bool redirectOnUnauthorized,
+    int retriesOnTimeoutOrNetwork = 0,
   }) async {
-    try {
-      final http.Response response = await request().timeout(_timeout);
+    var attemptsLeft = retriesOnTimeoutOrNetwork + 1;
+    while (attemptsLeft > 0) {
+      try {
+        final http.Response response = await request().timeout(_timeout);
 
-      if (response.statusCode == 401 && redirectOnUnauthorized) {
-        handleUnauthorized();
-        throw const ApiException(ApiErrorKind.unauthorized, 'Session expired');
-      }
-      if (response.statusCode == 403) {
-        throw const ApiException(ApiErrorKind.forbidden, 'Access denied');
-      }
-      if (response.statusCode >= 500) {
-        throw ApiException(
-          ApiErrorKind.server,
-          'Server error: ${response.statusCode}',
-          statusCode: response.statusCode,
-        );
-      }
+        if (response.statusCode == 401 && redirectOnUnauthorized) {
+          handleUnauthorized();
+          throw const ApiException(ApiErrorKind.unauthorized, 'Session expired');
+        }
+        if (response.statusCode == 403) {
+          throw const ApiException(ApiErrorKind.forbidden, 'Access denied');
+        }
+        if (response.statusCode >= 500) {
+          throw ApiException(
+            ApiErrorKind.server,
+            'Server error: ${response.statusCode}',
+            statusCode: response.statusCode,
+          );
+        }
 
-      return response;
-    } on TimeoutException {
-      throw const ApiException(ApiErrorKind.timeout, 'Request timeout');
-    } on SocketException {
-      throw const ApiException(ApiErrorKind.network, 'Network unavailable');
+        return response;
+      } on TimeoutException {
+        attemptsLeft--;
+        if (attemptsLeft == 0) {
+          throw const ApiException(ApiErrorKind.timeout, 'Request timeout');
+        }
+      } on SocketException {
+        attemptsLeft--;
+        if (attemptsLeft == 0) {
+          throw const ApiException(ApiErrorKind.network, 'Network unavailable');
+        }
+      }
     }
+    throw const ApiException(ApiErrorKind.network, 'Network unavailable');
   }
 
   static void handleUnauthorized() {

@@ -6,11 +6,13 @@ import com.echoes.flutterbackend.security.JwtTokenProvider;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Optional;
 
 @Service
+@Transactional(readOnly = true)
 public class UserService {
 
     private final UserRepository userRepository;
@@ -28,6 +30,7 @@ public class UserService {
     /**
      * Регистрация нового пользователя
      */
+    @Transactional
     public User register(User user) {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         if (user.getUsername() == null || user.getUsername().isBlank()) {
@@ -53,6 +56,7 @@ public class UserService {
     /**
      * Удаление пользователя по ID
      */
+    @Transactional
     public void deleteUser(Long id) {
         userRepository.deleteById(id);
     }
@@ -86,6 +90,7 @@ public class UserService {
                 });
     }
 
+    @Transactional
     public boolean changePassword(User user, String currentPassword, String newPassword) {
         if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
             return false;

@@ -6,11 +6,13 @@ import com.echoes.flutterbackend.entity.Favorite;
 import com.echoes.flutterbackend.repository.FavoriteRepository;
 import com.echoes.flutterbackend.repository.ProductRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
 
 @Service
+@Transactional(readOnly = true)
 public class FavoriteService {
     private final FavoriteRepository favoriteRepository;
     private final ProductRepository productRepository;
@@ -30,6 +32,7 @@ public class FavoriteService {
                 .toList();
     }
 
+    @Transactional
     public Optional<Favorite> addFavorite(Long userId, Long productId) {
         Optional<Favorite> existing = favoriteRepository.findByUserIdAndProductId(userId, productId);
         if (existing.isPresent()) {
@@ -42,6 +45,7 @@ public class FavoriteService {
         return Optional.of(favoriteRepository.save(favorite));
     }
 
+    @Transactional
     public boolean removeFavorite(Long userId, Long productId) {
         Optional<Favorite> existing = favoriteRepository.findByUserIdAndProductId(userId, productId);
         if (existing.isPresent()) {

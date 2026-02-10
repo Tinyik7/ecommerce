@@ -1,135 +1,164 @@
-## 1. Общие сведения
+## API Overview
 
-- Бэкенд: Spring Boot 3.5.7 + PostgreSQL, JWT авторизация.  
-- Swagger UI: `http://localhost:8080/swagger` (добавлен springdoc).  
-- OpenAPI JSON: `http://localhost:8080/api/docs`.  
-- Postman коллекция: `docs/postman/ecommerce_api.postman_collection.json`.
+- Base URL: `http://localhost:8080`
+- Swagger UI: `http://localhost:8080/swagger`
+- OpenAPI JSON: `http://localhost:8080/api/docs`
+- Auth: `Authorization: Bearer <token>`
 
-## 2. Пользователи (`/api/v1/users`)
+## Access Rules
 
-| Метод | URL | Описание |
-| --- | --- | --- |
-| `POST` | `/register` | Тело `{ "name": "", "email": "", "password": "" }` → создает пользователя, возвращает id и username. |
-| `POST` | `/login` | Возвращает JWT + профиль. |
-| `GET` | `/me` | Требует `Authorization: Bearer <token>`, отдаёт id/email/username. |
+- Public:
+  - `POST /api/v1/users/register`
+  - `POST /api/v1/users/login`
+  - `GET /api/v1/products`
+  - `GET /api/v1/products/{id}`
+  - `GET /actuator/health`
+- Authenticated:
+  - profile endpoints
+  - cart endpoints
+  - favorites endpoints
+- Admin only:
+  - product write endpoints (`POST/PUT/DELETE`)
+  - role update endpoint
 
-### Пример логина
+## User Endpoints
 
-```http
-POST /api/v1/users/login
-Content-Type: application/json
-
+### Register
+- `POST /api/v1/users/register`
+- Body:
+```json
 {
-  "email": "demo@echoes.app",
-  "password": "password"
+  "username": "demo",
+  "name": "Demo User",
+  "email": "demo@example.com",
+  "password": "Demo123!"
+}
+```
+- Responses:
+  - `200` created user payload
+  - `409` email/username conflict
+
+### Login
+- `POST /api/v1/users/login`
+- Body:
+```json
+{
+  "email": "demo@example.com",
+  "password": "Demo123!"
+}
+```
+- Responses:
+  - `200` token + user info
+  - `401` invalid credentials
+
+### Current User
+- `GET /api/v1/users/me`
+- Responses:
+  - `200` user profile
+  - `401` invalid/missing token
+
+### Update Profile
+- `PUT /api/v1/users/me`
+- Body:
+```json
+{
+  "username": "newdemo",
+  "name": "New Demo",
+  "email": "newdemo@example.com"
+}
+```
+- Responses:
+  - `200` updated profile
+  - `401` invalid/missing token
+  - `409` email/username conflict
+
+### Change Password
+- `PUT /api/v1/users/me/password`
+- Body:
+```json
+{
+  "currentPassword": "Demo123!",
+  "newPassword": "Demo456!"
+}
+```
+- Responses:
+  - `200` password updated
+  - `400` invalid current password
+  - `401` invalid/missing token
+
+### Update Role (Admin)
+- `PUT /api/v1/users/{id}/role`
+- Body:
+```json
+{
+  "role": "ADMIN"
+}
+```
+- Responses:
+  - `200` role updated
+  - `400` invalid role/body
+  - `403` forbidden
+
+## Product Endpoints
+
+### List/Search
+- `GET /api/v1/products`
+- Query params:
+  - `query`, `category`, `minPrice`, `maxPrice`, `minRating`, `inStock`, `onlyFavorites`
+  - `page`, `size`, `sortBy(name|price|rating|createdAt)`, `sortDir(asc|desc)`
+
+### Get by Id
+- `GET /api/v1/products/{id}`
+
+### Create (Admin)
+- `POST /api/v1/products`
+- Body example:
+```json
+{
+  "name": "New Product",
+  "price": 19.99,
+  "quantity": 5,
+  "category": "Clothing",
+  "in_stock": true
 }
 ```
 
-Ответ:
+### Update (Admin)
+- `PUT /api/v1/products/{id}`
+
+### Delete (Admin)
+- `DELETE /api/v1/products/{id}`
+
+## Favorites Endpoints
+
+- `GET /api/v1/favorites/{userId}`
+- `POST /api/v1/favorites/{userId}/add`
+- `DELETE /api/v1/favorites/{userId}/remove/{productId}`
+
+Note:
+- `userId` in path must match user from token; otherwise `403`.
+
+## Cart Endpoints
+
+- `GET /api/v1/cart/{userId}`
+- `POST /api/v1/cart/{userId}/add`
+- `PUT /api/v1/cart/{userId}/update/{productId}`
+- `DELETE /api/v1/cart/{userId}/remove/{productId}`
+- `DELETE /api/v1/cart/item/{itemId}`
+- `DELETE /api/v1/cart/{userId}/clear`
+
+Note:
+- `userId` in path must match user from token; otherwise `403`.
+
+## Unified Error Format
+
+Errors are returned via global exception handler:
 
 ```json
 {
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "id": 1,
-  "email": "demo@echoes.app",
-  "username": "Demo User"
+  "status": 403,
+  "message": "Access denied",
+  "details": null,
+  "timestamp": "2026-02-10T10:00:00Z"
 }
 ```
-
-## 3. Каталог (`/api/v1/products`)
-
-| Метод | Описание |
-| --- | --- |
-| `GET /api/v1/products` | Поддерживает `query`, `category`, `minPrice`, `maxPrice`, `minRating`, `inStock`, `onlyFavorites`, `page`, `size`, `sortBy=name|price|rating|createdAt`, `sortDir=asc|desc`. Возвращает `PageResponse` (`items`, `totalElements`, ...). |
-| `GET /api/v1/products/{id}` | Карточка с расширенными полями. |
-| `POST /api/v1/products` | JSON-тело `ProductRequest`, создаёт товар (для админки). |
-| `POST /api/v1/products/with-image` | Множественная часть `product` (JSON строка) + `image`. Файл сохраняется в `/uploads`. |
-| `PUT /api/v1/products/{id}` / `{id}/with-image` | Полное обновление. |
-| `DELETE /api/v1/products/{id}` | Удаление. |
-
-### Пример фильтрации
-
-```
-GET /api/v1/products?query=sneakers&category=shoes&minPrice=50&sortBy=price&sortDir=asc
-```
-
-Ответ (сокращён):
-
-```json
-{
-  "items": [
-    {
-      "id": 12,
-      "name": "City Sneakers",
-      "price": 59.99,
-      "rating": 4.8,
-      "category": "Shoes",
-      "inStock": true,
-      "image": "/uploads/12_city.png"
-    }
-  ],
-  "totalElements": 3,
-  "totalPages": 1,
-  "page": 0,
-  "size": 20,
-  "hasNext": false
-}
-```
-
-## 4. Избранное (`/api/v1/favorites`)
-
-| Метод | URL | Описание |
-| --- | --- | --- |
-| `GET` | `/{userId}` | Возвращает готовый список `ProductResponse`, нет необходимости делать N запросов. |
-| `POST` | `/{userId}/add` | Тело `{ "productId": 5 }`. |
-| `DELETE` | `/{userId}/remove/{productId}` | Удаляет товар из избранного. |
-
-## 5. Корзина (`/api/v1/cart`)
-
-| Метод | URL | Описание |
-| --- | --- | --- |
-| `GET` | `/{userId}` | Возвращает `CartResponse` (итоговая сумма + список `CartItemResponse` с вложенным `ProductResponse`). |
-| `POST` | `/{userId}/add` | `{ "productId": 4, "quantity": 1 }`. |
-| `PUT` | `/{userId}/update/{productId}` | Обновление количества. |
-| `DELETE` | `/{userId}/remove/{productId}` | Удалить по productId. |
-| `DELETE` | `/item/{itemId}` | Удаление по itemId. |
-| `DELETE` | `/{userId}/clear` | Очистка корзины. |
-
-### Ответ
-
-```json
-{
-  "cartId": 2,
-  "userId": 1,
-  "total": 139.98,
-  "items": [
-    {
-      "itemId": 11,
-      "quantity": 2,
-      "product": {
-        "id": 5,
-        "name": "Luna Hoodie",
-        "price": 69.99,
-        "size": "M",
-        "image": "http://localhost:8080/uploads/hoodie.png"
-      }
-    }
-  ]
-}
-```
-
-## 6. Тестирование API
-
-1. **Swagger** — быстро проверить контракт, отправить multipart, увидеть схему DTO.  
-2. **Postman** — коллекция в `docs/postman` содержит среды `Local` (порт 8080), примеры для авторизации (скрипт автоматически кладёт JWT в переменную).  
-3. **Flutter** — `HomeController` логирует результат `testConnection()` при старте, чтобы убедиться, что API доступен.  
-4. **Jackson/Validation** — `ProductRequest`/`GlobalExceptionHandler` возвращают структурированные ошибки (`status`, `message`, `details`).
-
-## 7. Асинхронность и оптимизация обмена
-
-- Клиент использует `http` + `Future`/`async`, прогресс-бары и Offline fallback.  
-- Локальный кеш (`sqflite`) уменьшает количество сетевых вызовов и позволяет показывать каталог/корзину без сети.  
-- На бэкенде фильтрация реализована на уровне БД (`JpaSpecificationExecutor`), поэтому на клиент уходит уже готовая выборка.
-
-
-
