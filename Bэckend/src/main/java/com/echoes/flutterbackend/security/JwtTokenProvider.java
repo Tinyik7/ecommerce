@@ -2,6 +2,8 @@ package com.echoes.flutterbackend.security;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -10,6 +12,7 @@ import java.util.Date;
 
 @Component
 public class JwtTokenProvider {
+    private static final Logger log = LoggerFactory.getLogger(JwtTokenProvider.class);
 
     private final long jwtAccessExpirationMs;
     private final long jwtRefreshExpirationMs;
@@ -78,15 +81,15 @@ public class JwtTokenProvider {
                     .parseClaimsJws(token);
             return true;
         } catch (ExpiredJwtException e) {
-            System.err.println("JWT token expired: " + e.getMessage());
+            log.debug("JWT token expired: {}", e.getMessage());
         } catch (UnsupportedJwtException e) {
-            System.err.println("Unsupported JWT: " + e.getMessage());
+            log.debug("Unsupported JWT: {}", e.getMessage());
         } catch (MalformedJwtException e) {
-            System.err.println("Malformed JWT: " + e.getMessage());
+            log.debug("Malformed JWT: {}", e.getMessage());
         } catch (SignatureException e) {
-            System.err.println("Invalid signature: " + e.getMessage());
+            log.debug("Invalid JWT signature: {}", e.getMessage());
         } catch (IllegalArgumentException e) {
-            System.err.println("Illegal argument: " + e.getMessage());
+            log.debug("Invalid JWT argument: {}", e.getMessage());
         }
         return false;
     }

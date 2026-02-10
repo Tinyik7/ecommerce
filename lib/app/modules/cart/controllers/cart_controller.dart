@@ -1,7 +1,6 @@
 ﻿import 'dart:convert';
 
 import 'package:get/get.dart';
-import 'package:http/http.dart' as http;
 
 import '../../../components/custom_snackbar.dart';
 import '../../../data/local/local_database_service.dart';
@@ -34,15 +33,10 @@ class CartController extends GetxController {
     try {
       isSyncing.value = true;
       update();
-      final response = await http.get(
+      final response = await ApiClient.get(
         Uri.parse('$baseUrl/$userId'),
         headers: ApiClient.authHeaders(),
       );
-
-      if (response.statusCode == 401) {
-        ApiClient.handleUnauthorized();
-        return;
-      }
 
       if (response.statusCode == 200) {
         _hydrateFromResponse(response.body);
@@ -51,6 +45,13 @@ class CartController extends GetxController {
       } else {
         throw Exception('Failed with status ${response.statusCode}');
       }
+    } on ApiException {
+      final cached = await LocalDatabaseService.readCartItems();
+      products
+        ..clear()
+        ..addAll(cached);
+      _recalculateTotal();
+      isOffline.value = true;
     } catch (e) {
       final cached = await LocalDatabaseService.readCartItems();
       products
@@ -69,7 +70,7 @@ class CartController extends GetxController {
     if (userId == 0 || product.id == null) return;
 
     try {
-      final response = await http.post(
+      final response = await ApiClient.post(
         Uri.parse('$baseUrl/$userId/add'),
         headers: ApiClient.authHeaders(),
         body: jsonEncode({
@@ -77,11 +78,6 @@ class CartController extends GetxController {
           'quantity': 1,
         }),
       );
-
-      if (response.statusCode == 401) {
-        ApiClient.handleUnauthorized();
-        return;
-      }
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         _hydrateFromResponse(response.body);
@@ -116,7 +112,7 @@ class CartController extends GetxController {
     if (userId == 0) return;
 
     try {
-      final response = await http.delete(
+      final response = await ApiClient.delete(
         Uri.parse('$baseUrl/$userId/remove/$productId'),
         headers: ApiClient.authHeaders(),
       );
@@ -185,7 +181,7 @@ class CartController extends GetxController {
     if (userId == 0 || product.id == null) return;
 
     try {
-      final response = await http.put(
+      final response = await ApiClient.put(
         Uri.parse('$baseUrl/$userId/update/${product.id}'),
         headers: ApiClient.authHeaders(),
         body: jsonEncode({'quantity': product.quantity ?? 1}),

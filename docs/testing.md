@@ -36,10 +36,14 @@
 
 - Command: `./mvnw test`
 - Current status:
-  - Last run: `2026-02-09`, `BUILD SUCCESS`, `Tests run: 4, Failures: 0, Errors: 0`.
+  - Last run: `2026-02-10`, `BUILD SUCCESS`, `Tests run: 9, Failures: 0, Errors: 0`.
   - `BackendApplicationTests` uses `test` profile (H2 in-memory DB).
   - `UserServiceTests` and `ProductServiceTests` cover core business flows.
-  - Legacy unrelated test package was removed to avoid false failures.
+  - `SecurityIntegrationTests` cover role checks and access isolation:
+    - USER cannot create product (`403`).
+    - USER cannot update role (`403`).
+    - USER cannot access another user's cart/favorites (`403`).
+    - ADMIN can create product (`200`).
 
 ### 4. Seed Verification
 

@@ -40,16 +40,22 @@ class AuthService {
     required String password,
   }) async {
     final Uri uri = Uri.parse('$_baseUrl/register');
-    final http.Response res = await http.post(
-      uri,
-      headers: <String, String>{'Content-Type': 'application/json'},
-      body: jsonEncode(<String, dynamic>{
-        'username': username.trim(),
-        'name': username.trim(),
-        'email': email.trim(),
-        'password': password,
-      }),
-    );
+    http.Response res;
+    try {
+      res = await ApiClient.post(
+        uri,
+        headers: <String, String>{'Content-Type': 'application/json'},
+        body: jsonEncode(<String, dynamic>{
+          'username': username.trim(),
+          'name': username.trim(),
+          'email': email.trim(),
+          'password': password,
+        }),
+        redirectOnUnauthorized: false,
+      );
+    } on ApiException catch (e) {
+      throw Exception(e.message);
+    }
 
     if (res.statusCode == 409) {
       throw AuthConflictException(res.body);
@@ -71,14 +77,23 @@ class AuthService {
     required String password,
   }) async {
     final Uri uri = Uri.parse('$_baseUrl/login');
-    final http.Response res = await http.post(
-      uri,
-      headers: <String, String>{'Content-Type': 'application/json'},
-      body: jsonEncode(<String, dynamic>{
-        'email': email.trim(),
-        'password': password,
-      }),
-    );
+    http.Response res;
+    try {
+      res = await ApiClient.post(
+        uri,
+        headers: <String, String>{'Content-Type': 'application/json'},
+        body: jsonEncode(<String, dynamic>{
+          'email': email.trim(),
+          'password': password,
+        }),
+        redirectOnUnauthorized: false,
+      );
+    } on ApiException catch (e) {
+      if (e.kind == ApiErrorKind.timeout || e.kind == ApiErrorKind.network) {
+        throw Exception(e.message);
+      }
+      rethrow;
+    }
 
     if (res.statusCode == 401) {
       throw UnauthorizedException();
@@ -101,13 +116,17 @@ class AuthService {
 
   Future<UserModel?> fetchCurrentUser() async {
     final Uri uri = Uri.parse('$_baseUrl/me');
-    final http.Response res = await http.get(
-      uri,
-      headers: ApiClient.authHeaders(),
-    );
+    http.Response res;
+    try {
+      res = await ApiClient.get(uri);
+    } on ApiException catch (e) {
+      if (e.kind == ApiErrorKind.unauthorized) {
+        return null;
+      }
+      throw Exception(e.message);
+    }
 
     if (res.statusCode == 401) {
-      ApiClient.handleUnauthorized();
       return null;
     }
 
@@ -138,16 +157,16 @@ class AuthService {
       payload['name'] = name.trim();
     }
 
-    final http.Response res = await http.put(
-      uri,
-      headers: ApiClient.authHeaders(),
-      body: jsonEncode(payload),
-    );
-
-    if (res.statusCode == 401) {
-      ApiClient.handleUnauthorized();
-      throw UnauthorizedException();
+    http.Response res;
+    try {
+      res = await ApiClient.put(uri, body: jsonEncode(payload));
+    } on ApiException catch (e) {
+      if (e.kind == ApiErrorKind.unauthorized) {
+        throw UnauthorizedException();
+      }
+      throw Exception(e.message);
     }
+
     if (res.statusCode == 409) {
       throw AuthConflictException(res.body);
     }
@@ -167,19 +186,22 @@ class AuthService {
     required String newPassword,
   }) async {
     final Uri uri = Uri.parse('$_baseUrl/me/password');
-    final http.Response res = await http.put(
-      uri,
-      headers: ApiClient.authHeaders(),
-      body: jsonEncode(<String, dynamic>{
-        'currentPassword': currentPassword,
-        'newPassword': newPassword,
-      }),
-    );
-
-    if (res.statusCode == 401) {
-      ApiClient.handleUnauthorized();
-      throw UnauthorizedException();
+    http.Response res;
+    try {
+      res = await ApiClient.put(
+        uri,
+        body: jsonEncode(<String, dynamic>{
+          'currentPassword': currentPassword,
+          'newPassword': newPassword,
+        }),
+      );
+    } on ApiException catch (e) {
+      if (e.kind == ApiErrorKind.unauthorized) {
+        throw UnauthorizedException();
+      }
+      throw Exception(e.message);
     }
+
     if (res.statusCode == 400) {
       throw InvalidCurrentPasswordException();
     }

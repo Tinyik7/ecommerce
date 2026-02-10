@@ -3,7 +3,6 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:http/http.dart' as http;
 
 import '../../../data/local/local_database_service.dart';
 import '../../../data/models/product_model.dart';
@@ -51,7 +50,11 @@ class HomeController extends GetxController {
         queryParameters: _buildQueryParameters(),
       );
 
-      final response = await http.get(uri, headers: ApiClient.authHeaders());
+      final response = await ApiClient.get(
+        uri,
+        headers: ApiClient.authHeaders(),
+        redirectOnUnauthorized: false,
+      );
 
       if (response.statusCode == 200) {
         final dynamic decoded = json.decode(response.body);
@@ -75,6 +78,19 @@ class HomeController extends GetxController {
       } else {
         throw Exception('Failed with status ${response.statusCode}');
       }
+    } on ApiException catch (e) {
+      debugPrint('Network/API error loading products: ${e.message}');
+      isOffline.value = true;
+      final cached = await LocalDatabaseService.readProducts(
+        query: searchQuery.isEmpty ? null : searchQuery,
+        category: selectedCategory,
+        minPrice: minPriceFilter,
+        maxPrice: maxPriceFilter,
+      );
+      _products
+        ..clear()
+        ..addAll(cached);
+      hasError.value = _products.isEmpty;
     } catch (e) {
       debugPrint('Error loading products: $e');
       isOffline.value = true;

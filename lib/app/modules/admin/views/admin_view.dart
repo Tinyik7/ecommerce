@@ -391,7 +391,7 @@ class AdminView extends GetView<AdminController> {
                   ),
                   12.verticalSpace,
                   DropdownButtonFormField<String>(
-                    value: selectedRole,
+                    initialValue: selectedRole,
                     items: const [
                       DropdownMenuItem(value: 'USER', child: Text('USER')),
                       DropdownMenuItem(value: 'ADMIN', child: Text('ADMIN')),

@@ -1,7 +1,6 @@
 ﻿import 'dart:convert';
 
 import 'package:get/get.dart';
-import 'package:http/http.dart' as http;
 
 import '../../../data/models/product_model.dart';
 import '../../../data/services/api_client.dart';
@@ -31,7 +30,7 @@ class AdminController extends GetxController {
         'sortBy': 'createdAt',
         'sortDir': 'desc',
       });
-      final response = await http.get(uri, headers: ApiClient.authHeaders());
+      final response = await ApiClient.get(uri, headers: ApiClient.authHeaders());
 
       if (response.statusCode == 200) {
         final dynamic decoded = jsonDecode(response.body);
@@ -52,6 +51,8 @@ class AdminController extends GetxController {
       } else {
         throw Exception('Failed to load products ${response.statusCode}');
       }
+    } on ApiException catch (e) {
+      Get.snackbar('Ошибка', e.message);
     } catch (e) {
       Get.snackbar('РћС€РёР±РєР°', 'РќРµ СѓРґР°Р»РѕСЃСЊ Р·Р°РіСЂСѓР·РёС‚СЊ С‚РѕРІР°СЂС‹: $e');
     } finally {
@@ -122,13 +123,19 @@ class AdminController extends GetxController {
       final headers = ApiClient.authHeaders();
       final uri = id == null ? Uri.parse(baseUrl) : Uri.parse('$baseUrl/$id');
 
-      late http.Response response;
+      late final dynamic response;
       if (id == null) {
-        response =
-            await http.post(uri, headers: headers, body: jsonEncode(payload));
+          response = await ApiClient.post(
+            uri,
+            headers: headers,
+            body: jsonEncode(payload),
+          );
       } else {
-        response =
-            await http.put(uri, headers: headers, body: jsonEncode(payload));
+        response = await ApiClient.put(
+          uri,
+          headers: headers,
+          body: jsonEncode(payload),
+        );
       }
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -138,6 +145,8 @@ class AdminController extends GetxController {
       } else {
         throw Exception(response.body);
       }
+    } on ApiException catch (e) {
+      Get.snackbar('Ошибка', e.message);
     } catch (e) {
       Get.snackbar('РћС€РёР±РєР°', 'РќРµ СѓРґР°Р»РѕСЃСЊ СЃРѕС…СЂР°РЅРёС‚СЊ: $e');
     } finally {
@@ -150,7 +159,7 @@ class AdminController extends GetxController {
     try {
       isSubmitting = true;
       update();
-      final response = await http.delete(
+      final response = await ApiClient.delete(
         Uri.parse('$baseUrl/$id'),
         headers: ApiClient.authHeaders(),
       );
@@ -160,6 +169,8 @@ class AdminController extends GetxController {
       } else {
         throw Exception(response.body);
       }
+    } on ApiException catch (e) {
+      Get.snackbar('Ошибка', e.message);
     } catch (e) {
       Get.snackbar('РћС€РёР±РєР°', 'РќРµ СѓРґР°Р»РѕСЃСЊ СѓРґР°Р»РёС‚СЊ: $e');
     } finally {
@@ -181,7 +192,7 @@ class AdminController extends GetxController {
         throw Exception('Role must be ADMIN or USER');
       }
 
-      final response = await http.put(
+      final response = await ApiClient.put(
         Uri.parse('$usersUrl/$userId/role'),
         headers: ApiClient.authHeaders(),
         body: jsonEncode({'role': normalized}),
@@ -193,6 +204,9 @@ class AdminController extends GetxController {
       }
 
       throw Exception('HTTP ${response.statusCode}: ${response.body}');
+    } on ApiException catch (e) {
+      Get.snackbar('Error', e.message);
+      rethrow;
     } catch (e) {
       Get.snackbar('Error', 'Failed to change role: $e');
       rethrow;

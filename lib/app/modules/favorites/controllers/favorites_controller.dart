@@ -1,7 +1,6 @@
 ﻿import 'dart:convert';
 
 import 'package:get/get.dart';
-import 'package:http/http.dart' as http;
 
 import '../../../data/local/local_database_service.dart';
 import '../../../data/local/my_shared_pref.dart';
@@ -25,15 +24,10 @@ class FavoritesController extends GetxController {
     if (userId == 0) return;
 
     try {
-      final response = await http.get(
+      final response = await ApiClient.get(
         Uri.parse('$favoritesUrl/$userId'),
         headers: ApiClient.authHeaders(),
       );
-
-      if (response.statusCode == 401) {
-        ApiClient.handleUnauthorized();
-        return;
-      }
 
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body) as List<dynamic>;
@@ -66,7 +60,7 @@ class FavoritesController extends GetxController {
     if (userId == 0 || product.id == null) return;
 
     try {
-      final response = await http.post(
+      final response = await ApiClient.post(
         Uri.parse('$favoritesUrl/$userId/add'),
         headers: ApiClient.authHeaders(),
         body: jsonEncode({'productId': product.id}),
@@ -86,7 +80,7 @@ class FavoritesController extends GetxController {
     if (userId == 0 || product.id == null) return;
 
     try {
-      final response = await http.delete(
+      final response = await ApiClient.delete(
         Uri.parse('$favoritesUrl/$userId/remove/${product.id}'),
         headers: ApiClient.authHeaders(),
       );
