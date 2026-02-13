@@ -3,12 +3,14 @@ package com.echoes.flutterbackend.controller;
 import com.echoes.flutterbackend.dto.ChangePasswordRequest;
 import com.echoes.flutterbackend.dto.ForgotPasswordRequest;
 import com.echoes.flutterbackend.dto.LoginRequest;
+import com.echoes.flutterbackend.dto.RegisterRequest;
 import com.echoes.flutterbackend.dto.ResetPasswordRequest;
 import com.echoes.flutterbackend.dto.UpdateProfileRequest;
 import com.echoes.flutterbackend.entity.User;
 import com.echoes.flutterbackend.repository.UserRepository;
 import com.echoes.flutterbackend.security.JwtTokenProvider;
 import com.echoes.flutterbackend.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -32,22 +34,22 @@ public class UserController {
         this.jwt = jwt;
     }
 
-    /**
-     * Регистрация нового пользователя
-     */
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody User req) {
-        if (req.getPassword() == null || req.getPassword().isBlank()) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Password cannot be empty"));
-        }
+    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest req) {
         if (userRepository.findByEmail(req.getEmail()).isPresent()) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", "Email already exists"));
         }
-        if (req.getUsername() != null && userRepository.findByUsername(req.getUsername()).isPresent()) {
+        if (userRepository.findByUsername(req.getUsername()).isPresent()) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", "Username already exists"));
         }
 
-        User saved = userService.register(req);
+        User user = new User();
+        user.setUsername(req.getUsername().trim());
+        user.setEmail(req.getEmail().trim());
+        user.setPassword(req.getPassword());
+        user.setName(req.getName() == null || req.getName().isBlank() ? req.getUsername().trim() : req.getName().trim());
+
+        User saved = userService.register(user);
         return ResponseEntity.ok(Map.of(
                 "id", saved.getId(),
                 "email", saved.getEmail(),
@@ -57,17 +59,13 @@ public class UserController {
         ));
     }
 
-    /**
-     * Авторизация пользователя
-     */
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest req) {
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest req) {
         String email = req.getEmail();
         String password = req.getPassword();
 
         return userService.login(email, password)
                 .map(user -> {
-                    // ✅ generateAccessToken включает роль
                     String token = jwt.generateAccessToken(email, user.getRole());
                     return ResponseEntity.ok(Map.of(
                             "token", token,
@@ -82,14 +80,13 @@ public class UserController {
     }
 
     @PostMapping("/forgot-password")
-    public ResponseEntity<?> forgotPassword(@RequestBody ForgotPasswordRequest req) {
+    public ResponseEntity<?> forgotPassword(@Valid @RequestBody ForgotPasswordRequest req) {
         String token = userService.initiatePasswordReset(req.getEmail());
         if (token == null) {
             return ResponseEntity.ok(Map.of(
                     "message", "If account exists, reset instructions are generated"
             ));
         }
-        // Demo mode: token is returned directly instead of email delivery.
         return ResponseEntity.ok(Map.of(
                 "message", "Reset token generated",
                 "resetToken", token
@@ -97,7 +94,7 @@ public class UserController {
     }
 
     @PostMapping("/reset-password")
-    public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest req) {
+    public ResponseEntity<?> resetPassword(@Valid @RequestBody ResetPasswordRequest req) {
         boolean changed = userService.resetPasswordByToken(req.getToken(), req.getNewPassword());
         if (!changed) {
             return ResponseEntity.badRequest().body(Map.of("message", "Invalid or expired reset token"));
@@ -105,9 +102,6 @@ public class UserController {
         return ResponseEntity.ok(Map.of("message", "Password updated"));
     }
 
-    /**
-     * Получить текущего пользователя (по токену)
-     */
     @GetMapping("/me")
     public ResponseEntity<?> me(@RequestHeader("Authorization") String auth) {
         if (auth == null || !auth.startsWith("Bearer ")) {
@@ -136,7 +130,7 @@ public class UserController {
 
     @PutMapping("/me")
     public ResponseEntity<?> updateProfile(@RequestHeader("Authorization") String auth,
-                                           @RequestBody UpdateProfileRequest req) {
+                                           @Valid @RequestBody UpdateProfileRequest req) {
         User user = userService.getUserFromAuthHeader(auth);
 
         String email = req.getEmail();
@@ -168,13 +162,8 @@ public class UserController {
 
     @PutMapping("/me/password")
     public ResponseEntity<?> changePassword(@RequestHeader("Authorization") String auth,
-                                            @RequestBody ChangePasswordRequest req) {
+                                            @Valid @RequestBody ChangePasswordRequest req) {
         User user = userService.getUserFromAuthHeader(auth);
-
-        if (req.getCurrentPassword() == null || req.getCurrentPassword().isBlank()
-                || req.getNewPassword() == null || req.getNewPassword().isBlank()) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Current and new password are required"));
-        }
 
         boolean changed = userService.changePassword(user, req.getCurrentPassword(), req.getNewPassword());
         if (!changed) {

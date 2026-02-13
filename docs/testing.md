@@ -37,8 +37,8 @@
 - Backend command: `./mvnw test`
 - Flutter command: `flutter test`
 - Current status:
-  - Last backend run: `2026-02-11`, `BUILD SUCCESS`, `Tests run: 10, Failures: 0, Errors: 0`.
-  - Last flutter run: `2026-02-11`, `All tests passed` (`forgot_password_controller_test`, `forgot_password_view_test`).
+  - Last backend run: `2026-02-13`, `BUILD SUCCESS`, `Tests run: 12, Failures: 0, Errors: 0`.
+  - Last flutter run: `2026-02-13`, `All tests passed` (`forgot_password_controller_test`, `forgot_password_view_test`).
   - `BackendApplicationTests` uses `test` profile (H2 in-memory DB).
   - `UserServiceTests` and `ProductServiceTests` cover core business flows.
   - `SecurityIntegrationTests` cover role checks and access isolation:
@@ -46,6 +46,9 @@
     - USER cannot update role (`403`).
     - USER cannot access another user's cart/favorites (`403`).
     - ADMIN can create product (`200`).
+  - `ValidationIntegrationTests` cover request validation and error format:
+    - invalid `POST /api/v1/users/register` -> `400` with field-level `details`.
+    - invalid `POST /api/v1/users/login` -> `400` with field-level `details`.
   - Flutter tests cover:
     - email/token/password validation rules in forgot-password controller;
     - forgot-password screen fields/buttons render correctly.
