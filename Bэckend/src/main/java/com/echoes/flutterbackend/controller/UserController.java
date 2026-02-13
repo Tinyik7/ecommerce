@@ -1,7 +1,9 @@
 package com.echoes.flutterbackend.controller;
 
 import com.echoes.flutterbackend.dto.ChangePasswordRequest;
+import com.echoes.flutterbackend.dto.ForgotPasswordRequest;
 import com.echoes.flutterbackend.dto.LoginRequest;
+import com.echoes.flutterbackend.dto.ResetPasswordRequest;
 import com.echoes.flutterbackend.dto.UpdateProfileRequest;
 import com.echoes.flutterbackend.entity.User;
 import com.echoes.flutterbackend.repository.UserRepository;
@@ -77,6 +79,30 @@ public class UserController {
                 })
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(Map.of("message", "Invalid email or password")));
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestBody ForgotPasswordRequest req) {
+        String token = userService.initiatePasswordReset(req.getEmail());
+        if (token == null) {
+            return ResponseEntity.ok(Map.of(
+                    "message", "If account exists, reset instructions are generated"
+            ));
+        }
+        // Demo mode: token is returned directly instead of email delivery.
+        return ResponseEntity.ok(Map.of(
+                "message", "Reset token generated",
+                "resetToken", token
+        ));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest req) {
+        boolean changed = userService.resetPasswordByToken(req.getToken(), req.getNewPassword());
+        if (!changed) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Invalid or expired reset token"));
+        }
+        return ResponseEntity.ok(Map.of("message", "Password updated"));
     }
 
     /**

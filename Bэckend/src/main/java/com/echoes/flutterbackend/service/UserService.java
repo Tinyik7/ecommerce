@@ -10,6 +10,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Optional;
+import java.util.UUID;
+import java.time.Instant;
 
 @Service
 @Transactional(readOnly = true)
@@ -96,6 +98,48 @@ public class UserService {
             return false;
         }
         user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+        return true;
+    }
+
+    @Transactional
+    public String initiatePasswordReset(String email) {
+        if (email == null || email.isBlank()) {
+            return null;
+        }
+        Optional<User> userOpt = userRepository.findByEmail(email.trim());
+        if (userOpt.isEmpty()) {
+            return null;
+        }
+
+        User user = userOpt.get();
+        String token = UUID.randomUUID().toString();
+        user.setPasswordResetToken(token);
+        user.setPasswordResetExpiresAt(Instant.now().plusSeconds(24 * 60 * 60));
+        userRepository.save(user);
+        return token;
+    }
+
+    @Transactional
+    public boolean resetPasswordByToken(String token, String newPassword) {
+        if (token == null || token.isBlank() || newPassword == null || newPassword.isBlank()) {
+            return false;
+        }
+        String normalizedToken = token.trim();
+        Optional<User> userOpt = userRepository.findByPasswordResetToken(normalizedToken);
+        if (userOpt.isEmpty()) {
+            return false;
+        }
+
+        User user = userOpt.get();
+        Instant expiresAt = user.getPasswordResetExpiresAt();
+        if (expiresAt != null && expiresAt.isBefore(Instant.now())) {
+            return false;
+        }
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        user.setPasswordResetToken(null);
+        user.setPasswordResetExpiresAt(null);
         userRepository.save(user);
         return true;
     }

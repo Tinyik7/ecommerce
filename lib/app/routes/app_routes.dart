@@ -8,6 +8,7 @@ abstract class Routes {
   static const SPLASH = _Paths.SPLASH;
   static const REGISTER = _Paths.REGISTER;
   static const LOGIN = _Paths.LOGIN;
+  static const FORGOT_PASSWORD = _Paths.FORGOT_PASSWORD;
   static const BASE = _Paths.BASE;
   static const HOME = _Paths.HOME;
   static const FAVORITES = _Paths.FAVORITES;
@@ -22,6 +23,7 @@ abstract class Routes {
   static const splash = _Paths.SPLASH;
   static const register = _Paths.REGISTER;
   static const login = _Paths.LOGIN;
+  static const forgotPassword = _Paths.FORGOT_PASSWORD;
   static const base = _Paths.BASE;
   static const home = _Paths.HOME;
   static const favorites = _Paths.FAVORITES;
@@ -38,6 +40,7 @@ abstract class _Paths {
   static const SPLASH = '/splash';
   static const REGISTER = '/register';
   static const LOGIN = '/login';
+  static const FORGOT_PASSWORD = '/forgot-password';
   static const BASE = '/base';
   static const HOME = '/home';
   static const FAVORITES = '/favorites';

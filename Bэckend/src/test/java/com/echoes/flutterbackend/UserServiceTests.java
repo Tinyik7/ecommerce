@@ -54,4 +54,25 @@ class UserServiceTests {
         User updated = userRepository.findById(saved.getId()).orElseThrow();
         assertTrue(passwordEncoder.matches("newpass", updated.getPassword()));
     }
+
+    @Test
+    void forgotPasswordFlowShouldGenerateTokenAndResetPassword() {
+        User user = new User();
+        user.setEmail("reset@test.com");
+        user.setUsername("reset-user");
+        user.setPassword(passwordEncoder.encode("oldpass"));
+        user.setRole("USER");
+        userRepository.save(user);
+
+        String token = userService.initiatePasswordReset("reset@test.com");
+        assertNotNull(token);
+        assertFalse(token.isBlank());
+
+        boolean changed = userService.resetPasswordByToken(token, "newpass123");
+        assertTrue(changed);
+
+        User updated = userRepository.findByEmail("reset@test.com").orElseThrow();
+        assertTrue(passwordEncoder.matches("newpass123", updated.getPassword()));
+        assertNull(updated.getPasswordResetToken());
+    }
 }

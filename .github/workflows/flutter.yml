@@ -32,4 +32,9 @@ jobs:
       - name: Static analysis
         run: flutter analyze
       - name: Unit tests
-        run: flutter test
+        run: |
+          if [ -d test ] && find test -name '*_test.dart' -print -quit | grep -q .; then
+            flutter test
+          else
+            echo "No Flutter tests found, skipping."
+          fi

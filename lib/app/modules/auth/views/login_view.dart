@@ -67,6 +67,11 @@ class LoginView extends StatelessWidget {
                       : const Text('\u0412\u043E\u0439\u0442\u0438'),
                 ),
               ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () => Get.toNamed(Routes.forgotPassword),
+                child: const Text('Забыли пароль?'),
+              ),
               const SizedBox(height: 12),
               TextButton(
                 onPressed: () => Get.offAllNamed(Routes.register),

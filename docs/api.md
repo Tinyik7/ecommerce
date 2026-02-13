@@ -51,6 +51,31 @@
   - `200` token + user info
   - `401` invalid credentials
 
+### Forgot Password (Demo Token Mode)
+- `POST /api/v1/users/forgot-password`
+- Body:
+```json
+{
+  "email": "demo@example.com"
+}
+```
+- Responses:
+  - `200` generic message
+  - `200` with `resetToken` when account exists (demo mode, no SMTP required)
+
+### Reset Password by Token
+- `POST /api/v1/users/reset-password`
+- Body:
+```json
+{
+  "token": "uuid-token",
+  "newPassword": "Demo789!"
+}
+```
+- Responses:
+  - `200` password updated
+  - `400` invalid or expired token
+
 ### Current User
 - `GET /api/v1/users/me`
 - Responses:

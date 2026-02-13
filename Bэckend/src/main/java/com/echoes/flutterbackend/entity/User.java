@@ -3,6 +3,8 @@ package com.echoes.flutterbackend.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.time.Instant;
+
 @Entity
 @Data
 @Table(name = "users")
@@ -20,4 +22,10 @@ public class User {
 
     @Column(nullable = false)
     private String role = "USER";
+
+    @Column(name = "password_reset_token")
+    private String passwordResetToken;
+
+    @Column(name = "password_reset_expires_at")
+    private Instant passwordResetExpiresAt;
 }

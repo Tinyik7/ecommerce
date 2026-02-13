@@ -212,6 +212,50 @@ class AuthService {
     final String body = res.body.isNotEmpty ? res.body : 'Password update failed';
     throw Exception('HTTP ${res.statusCode}: $body');
   }
+
+  Future<String?> requestPasswordReset({
+    required String email,
+  }) async {
+    final Uri uri = Uri.parse('$_baseUrl/forgot-password');
+    final http.Response res = await ApiClient.post(
+      uri,
+      headers: const <String, String>{'Content-Type': 'application/json'},
+      body: jsonEncode(<String, dynamic>{'email': email.trim()}),
+      redirectOnUnauthorized: false,
+    );
+
+    if (res.statusCode == 200 && res.body.isNotEmpty) {
+      final dynamic decoded = jsonDecode(res.body);
+      if (decoded is Map<String, dynamic>) {
+        return decoded['resetToken']?.toString();
+      }
+    }
+    return null;
+  }
+
+  Future<void> resetPasswordByToken({
+    required String token,
+    required String newPassword,
+  }) async {
+    final Uri uri = Uri.parse('$_baseUrl/reset-password');
+    final http.Response res = await ApiClient.post(
+      uri,
+      headers: const <String, String>{'Content-Type': 'application/json'},
+      body: jsonEncode(<String, dynamic>{
+        'token': token.trim(),
+        'newPassword': newPassword,
+      }),
+      redirectOnUnauthorized: false,
+    );
+
+    if (res.statusCode == 200) {
+      return;
+    }
+    if (res.statusCode == 400) {
+      throw Exception('Invalid or expired reset token');
+    }
+    throw Exception('HTTP ${res.statusCode}: ${res.body}');
+  }
 }
 
 class LoginResult {

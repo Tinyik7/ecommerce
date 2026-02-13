@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import '../modules/admin/bindings/admin_binding.dart';
 import '../modules/admin/views/admin_view.dart';
 import '../modules/auth/views/login_view.dart';
+import '../modules/auth/views/forgot_password_view.dart';
 import '../modules/auth/views/register_view.dart';
 import '../modules/base/bindings/base_binding.dart';
 import '../modules/base/views/base_view.dart';
@@ -43,6 +44,10 @@ class AppPages {
     GetPage(
       name: Routes.login,
       page: () => LoginView(),
+    ),
+    GetPage(
+      name: Routes.forgotPassword,
+      page: () => ForgotPasswordView(),
     ),
     GetPage(
       name: Routes.base,

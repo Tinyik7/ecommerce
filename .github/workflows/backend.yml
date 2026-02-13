@@ -3,21 +3,12 @@ name: Backend CI
 on:
   push:
     branches: [ "main" ]
-    paths:
-      - "Bэckend/**"
-      - ".github/workflows/backend.yml"
   pull_request:
     branches: [ "main" ]
-    paths:
-      - "Bэckend/**"
-      - ".github/workflows/backend.yml"
 
 jobs:
   test:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: Bэckend
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -25,5 +16,13 @@ jobs:
           distribution: temurin
           java-version: "17"
           cache: maven
-      - name: Run backend tests
-        run: ./mvnw test
+      - name: Locate backend and run tests
+        run: |
+          BACKEND_DIR="$(find . -maxdepth 3 -type f -name mvnw -path '*ckend/*' | head -n 1 | xargs dirname)"
+          if [ -z "$BACKEND_DIR" ]; then
+            echo "Backend directory with mvnw was not found"
+            exit 1
+          fi
+          echo "Using backend dir: $BACKEND_DIR"
+          cd "$BACKEND_DIR"
+          ./mvnw test
