@@ -27,11 +27,11 @@ class HomeView extends GetView<HomeController> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text('Не удалось загрузить товары'),
+                  Text('load_products_error'.tr),
                   const SizedBox(height: 12),
                   ElevatedButton(
                     onPressed: controller.fetchProducts,
-                    child: const Text('Повторить'),
+                    child: Text('retry'.tr),
                   ),
                 ],
               ),
@@ -106,7 +106,7 @@ class _SearchField extends StatelessWidget {
       controller: controller.searchCtrl,
       onChanged: controller.onSearchChanged,
       decoration: InputDecoration(
-        hintText: 'Поиск по каталогу',
+        hintText: 'search_catalog'.tr,
         prefixIcon: const Icon(Icons.search),
         suffixIcon: controller.searchQuery.isNotEmpty
             ? IconButton(
@@ -135,13 +135,17 @@ class _FilterBar extends StatelessWidget {
           child: PopupMenuButton<String>(
             initialValue: controller.sortOption,
             onSelected: controller.changeSort,
-            itemBuilder: (_) => const [
-              PopupMenuItem(value: 'new', child: Text('Сначала новые')),
+            itemBuilder: (_) => [
+              PopupMenuItem(value: 'new', child: Text('sort_new'.tr)),
               PopupMenuItem(
-                  value: 'price_low', child: Text('Цена: по возрастанию')),
+                value: 'price_low',
+                child: Text('sort_price_low'.tr),
+              ),
               PopupMenuItem(
-                  value: 'price_high', child: Text('Цена: по убыванию')),
-              PopupMenuItem(value: 'rating', child: Text('Рейтинг')),
+                value: 'price_high',
+                child: Text('sort_price_high'.tr),
+              ),
+              PopupMenuItem(value: 'rating', child: Text('sort_rating'.tr)),
             ],
             child: Chip(
               avatar: const Icon(Icons.sort, size: 18),
@@ -153,7 +157,7 @@ class _FilterBar extends StatelessWidget {
         OutlinedButton.icon(
           onPressed: () => _openPriceSheet(context, controller),
           icon: const Icon(Icons.price_change, size: 18),
-          label: const Text('Цена'),
+          label: Text('price'.tr),
         ),
         12.horizontalSpace,
         IconButton(
@@ -167,13 +171,13 @@ class _FilterBar extends StatelessWidget {
   static String _sortLabel(String value) {
     switch (value) {
       case 'price_low':
-        return 'Цена ↑';
+        return 'sort_price_low'.tr;
       case 'price_high':
-        return 'Цена ↓';
+        return 'sort_price_high'.tr;
       case 'rating':
-        return 'Рейтинг';
+        return 'sort_rating'.tr;
       default:
-        return 'Новые';
+        return 'sort_new'.tr;
     }
   }
 
@@ -198,20 +202,20 @@ class _FilterBar extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Диапазон цен', style: context.textTheme.titleLarge),
+            Text('price_range'.tr, style: context.textTheme.titleLarge),
             16.verticalSpace,
             TextField(
               controller: minCtrl,
               keyboardType:
                   const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(labelText: 'От'),
+              decoration: InputDecoration(labelText: 'price_from'.tr),
             ),
             12.verticalSpace,
             TextField(
               controller: maxCtrl,
               keyboardType:
                   const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(labelText: 'До'),
+              decoration: InputDecoration(labelText: 'price_to'.tr),
             ),
             20.verticalSpace,
             SizedBox(
@@ -223,7 +227,7 @@ class _FilterBar extends StatelessWidget {
                   controller.setPriceRange(min, max);
                   Get.back();
                 },
-                child: const Text('Применить'),
+                child: Text('apply'.tr),
               ),
             ),
           ],
@@ -255,10 +259,11 @@ class _ActiveFilters extends StatelessWidget {
     if (controller.minPriceFilter != null ||
         controller.maxPriceFilter != null) {
       final min = controller.minPriceFilter?.toStringAsFixed(0) ?? '0';
-      final max = controller.maxPriceFilter?.toStringAsFixed(0) ?? '∞';
+      final max = controller.maxPriceFilter?.toStringAsFixed(0) ??
+          'unlimited_symbol'.tr;
       chips.add(
         InputChip(
-          label: Text('Цена $min - $max'),
+          label: Text('${'price'.tr} $min - $max'),
           onDeleted: () => controller.setPriceRange(null, null),
         ),
       );
@@ -267,7 +272,7 @@ class _ActiveFilters extends StatelessWidget {
     if (controller.inStockOnly) {
       chips.add(
         InputChip(
-          label: const Text('В наличии'),
+          label: Text('in_stock'.tr),
           onDeleted: () => controller.toggleInStock(false),
         ),
       );
@@ -320,7 +325,7 @@ class _InStockSwitch extends StatelessWidget {
     return SwitchListTile(
       value: controller.inStockOnly,
       onChanged: controller.toggleInStock,
-      title: const Text('Показывать только товары в наличии'),
+      title: Text('in_stock_only'.tr),
     );
   }
 }
@@ -344,7 +349,7 @@ class _OfflineBanner extends StatelessWidget {
           12.horizontalSpace,
           Expanded(
             child: Text(
-              'Нет сети, показываем сохранённые данные',
+              'offline_cached_data'.tr,
               style: theme.textTheme.bodyMedium,
             ),
           ),

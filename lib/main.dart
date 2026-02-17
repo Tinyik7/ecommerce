@@ -1,4 +1,4 @@
-﻿import 'dart:io' show Platform;
+import 'dart:io' show Platform;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -55,10 +55,11 @@ Future<void> main() async {
       useInheritedMediaQuery: true,
       rebuildFactor: (old, data) => true,
       builder: (context, widget) {
+        final Locale initialLocale = MySharedPref.getLocale();
         return GetMaterialApp(
           title: 'app_title'.tr,
           translations: AppTranslations(),
-          locale: const Locale('ru', 'RU'),
+          locale: initialLocale,
           fallbackLocale: const Locale('en', 'US'),
           useInheritedMediaQuery: true,
           debugShowCheckedModeBanner: false,
@@ -81,5 +82,3 @@ Future<void> main() async {
     ),
   );
 }
-
-

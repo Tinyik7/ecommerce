@@ -25,12 +25,25 @@ class MySharedPref {
   }
 
   static Future<void> setLocale(Locale locale) async {
-    await _sharedPreferences.setString(_localeKey, locale.languageCode);
+    final String normalized =
+        locale.countryCode == null || locale.countryCode!.isEmpty
+            ? locale.languageCode
+            : '${locale.languageCode}_${locale.countryCode}';
+    await _sharedPreferences.setString(_localeKey, normalized);
   }
 
   static Locale getLocale() {
     final String? code = _sharedPreferences.getString(_localeKey);
-    return Locale(code ?? 'en');
+    if (code == null || code.isEmpty) {
+      return const Locale('ru', 'RU');
+    }
+    if (code.contains('_')) {
+      final parts = code.split('_');
+      if (parts.length == 2) {
+        return Locale(parts[0], parts[1]);
+      }
+    }
+    return Locale(code);
   }
 
   static Future<void> setToken(String token) async {

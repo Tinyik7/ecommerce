@@ -102,21 +102,14 @@ class SettingsView extends GetView<SettingsController> {
           ListTile(
             title: const Text('English'),
             onTap: () {
-              controller.changeLanguage(const Locale('en'));
+              controller.changeLanguage(const Locale('en', 'US'));
               Get.back();
             },
           ),
           ListTile(
             title: const Text('Русский'),
             onTap: () {
-              controller.changeLanguage(const Locale('ru'));
-              Get.back();
-            },
-          ),
-          ListTile(
-            title: const Text('Қазақша'),
-            onTap: () {
-              controller.changeLanguage(const Locale('kk'));
+              controller.changeLanguage(const Locale('ru', 'RU'));
               Get.back();
             },
           ),

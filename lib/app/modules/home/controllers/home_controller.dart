@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -35,7 +35,8 @@ class HomeController extends GetxController {
     super.onInit();
     fetchProducts();
     RealtimeService.instance.connect();
-    _realtimeSubscription = RealtimeService.instance.events.listen(_onRealtimeEvent);
+    _realtimeSubscription =
+        RealtimeService.instance.events.listen(_onRealtimeEvent);
   }
 
   @override
@@ -51,10 +52,10 @@ class HomeController extends GetxController {
     final type = event['type']?.toString();
     if (type == null || type.isEmpty) return;
 
-    final name = event['productName']?.toString() ?? 'Product';
+    final name = event['productName']?.toString() ?? 'product_default_name'.tr;
     if (type == 'CREATED' || type == 'UPDATED' || type == 'DELETED') {
       fetchProducts(showLoader: false);
-      Get.snackbar('Realtime update', '$type: $name');
+      Get.snackbar('realtime_update'.tr, '$type: $name');
     }
   }
 
@@ -287,5 +288,3 @@ class HomeController extends GetxController {
     visibleProducts.assignAll(result);
   }
 }
-
-
