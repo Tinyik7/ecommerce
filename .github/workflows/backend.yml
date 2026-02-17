@@ -43,6 +43,11 @@ jobs:
           echo "Using backend dir: $BACKEND_DIR"
           cd "$BACKEND_DIR"
 
+          if [ ! -f .env ]; then
+            echo "No .env found, creating empty .env for CI smoke run"
+            touch .env
+          fi
+
           docker compose up -d --build
           trap 'docker compose logs backend || true; docker compose down -v || true' EXIT
 
