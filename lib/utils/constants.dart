@@ -13,8 +13,10 @@ class Constants {
   static const favOutlinedIcon = 'assets/vectors/fav_outlined.svg';
   static const backArrowIcon = 'assets/vectors/back_arrow.svg';
   static const busIcon = 'assets/vectors/bus.svg';
-  static const increaseIcon = 'assets/vectors/increase.svg';
-  static const decreaseIcon = 'assets/vectors/decrease.svg';
+  // Asset files are named opposite to their actual symbols:
+  // increase.svg contains "-" and decrease.svg contains "+".
+  static const increaseIcon = 'assets/vectors/decrease.svg';
+  static const decreaseIcon = 'assets/vectors/increase.svg';
   static const cancelIcon = 'assets/vectors/cancel.svg';
   static const forwardArrowIcon = 'assets/vectors/forward_arrow.svg';
   static const userIcon = 'assets/vectors/user.svg';

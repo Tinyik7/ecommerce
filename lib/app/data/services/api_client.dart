@@ -119,8 +119,8 @@ class ApiClient {
   }
 
   static void handleUnauthorized() {
-    const String title = 'Сессия истекла';
-    const String message = 'Пожалуйста, войдите снова';
+    const String title = 'Session expired';
+    const String message = 'Please sign in again';
 
     Get.offAllNamed(Routes.login);
     Get.snackbar(title, message);
@@ -139,3 +139,4 @@ class ApiException implements Exception {
   @override
   String toString() => message;
 }
+

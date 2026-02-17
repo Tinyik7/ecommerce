@@ -12,6 +12,7 @@ import '../../base/controllers/base_controller.dart';
 class CartController extends GetxController {
   List<ProductModel> products = <ProductModel>[];
   double total = 0.0;
+  final RxSet<int> cartProductIds = <int>{}.obs;
 
   final String baseUrl = 'http://localhost:8080/api/v1/cart';
 
@@ -82,9 +83,13 @@ class CartController extends GetxController {
       if (response.statusCode == 200 || response.statusCode == 201) {
         _hydrateFromResponse(response.body);
         await _cacheCart();
+        if (product.id != null) {
+          cartProductIds.add(product.id!);
+        }
+        product.inCart = true;
         CustomSnackBar.showCustomSnackBar(
-          title: 'РљРѕСЂР·РёРЅР°',
-          message: '${product.name ?? 'РўРѕРІР°СЂ'} РґРѕР±Р°РІР»РµРЅ',
+          title: 'Cart',
+          message: '${product.name ?? 'Product'} added',
         );
       }
     } catch (_) {
@@ -96,6 +101,9 @@ class CartController extends GetxController {
       } else {
         product.inCart = true;
         product.quantity = (product.quantity ?? 0) + 1;
+        if (product.id != null) {
+          cartProductIds.add(product.id!);
+        }
         products.add(product);
         target = product;
       }
@@ -118,16 +126,28 @@ class CartController extends GetxController {
       );
 
       if (response.statusCode == 200 || response.statusCode == 204) {
+        final removed = products.firstWhereOrNull((p) => (p.id ?? 0) == productId);
+        if (removed != null) {
+          removed.inCart = false;
+          removed.quantity = 0;
+        }
         products.removeWhere((p) => (p.id ?? 0) == productId);
+        cartProductIds.remove(productId);
         _recalculateTotal();
         await LocalDatabaseService.removeCartItem(productId);
         CustomSnackBar.showCustomSnackBar(
-          title: 'РљРѕСЂР·РёРЅР°',
-          message: 'РўРѕРІР°СЂ СѓРґР°Р»С‘РЅ',
+          title: 'Cart',
+          message: 'Product removed',
         );
       }
     } catch (_) {
+      final removed = products.firstWhereOrNull((p) => (p.id ?? 0) == productId);
+      if (removed != null) {
+        removed.inCart = false;
+        removed.quantity = 0;
+      }
       products.removeWhere((p) => (p.id ?? 0) == productId);
+      cartProductIds.remove(productId);
       _recalculateTotal();
       await LocalDatabaseService.removeCartItem(productId);
       isOffline.value = true;
@@ -166,12 +186,13 @@ class CartController extends GetxController {
 
     products.clear();
     total = 0;
+    cartProductIds.clear();
     await LocalDatabaseService.clearCart();
 
     Get.find<BaseController>().changeScreen(0);
     CustomSnackBar.showCustomSnackBar(
-      title: 'РџРѕРєСѓРїРєР° РѕС„РѕСЂРјР»РµРЅР°',
-      message: 'РЎРїР°СЃРёР±Рѕ Р·Р° Р·Р°РєР°Р·!',
+      title: 'Order placed',
+      message: 'Thank you for your purchase!',
     );
     update();
   }
@@ -208,7 +229,23 @@ class CartController extends GetxController {
       product.inCart = true;
       return product;
     }).toList();
+    _syncCartIdsFromProducts();
     _recalculateTotal();
+  }
+
+  bool isInCart(int? productId) {
+    if (productId == null) return false;
+    return cartProductIds.contains(productId);
+  }
+
+  void syncProductState(ProductModel product) {
+    final int? id = product.id;
+    if (id == null) return;
+    final bool inCartNow = cartProductIds.contains(id);
+    product.inCart = inCartNow;
+    if (!inCartNow) {
+      product.quantity = 0;
+    }
   }
 
   void _recalculateTotal() {
@@ -225,6 +262,12 @@ class CartController extends GetxController {
         await LocalDatabaseService.upsertCartItem(product);
       }
     }
+  }
+
+  void _syncCartIdsFromProducts() {
+    cartProductIds
+      ..clear()
+      ..addAll(products.map((p) => p.id).whereType<int>());
   }
 }
 

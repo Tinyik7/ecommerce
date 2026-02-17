@@ -7,6 +7,16 @@ import '../../cart/controllers/cart_controller.dart';
 class ProductDetailsController extends GetxController {
   late final ProductModel product = Get.arguments;
   String selectedSize = 'M';
+  CartController? _cartController;
+
+  @override
+  void onInit() {
+    super.onInit();
+    if (Get.isRegistered<CartController>()) {
+      _cartController = Get.find<CartController>();
+      _cartController?.syncProductState(product);
+    }
+  }
 
   Future<void> onFavoriteButtonPressed() async {
     try {
@@ -14,13 +24,14 @@ class ProductDetailsController extends GetxController {
       await baseController.onFavoriteButtonPressed(product: product);
       update(['FavoriteButton']);
     } catch (e) {
-      Get.snackbar('Ошибка', 'Не удалось обновить избранное: $e');
+      Get.snackbar('Error', 'Failed to update favorite: $e');
     }
   }
 
   Future<void> onAddToCartPressed() async {
     try {
-      final cartController = Get.find<CartController>();
+      final cartController = _cartController ?? Get.find<CartController>();
+      cartController.syncProductState(product);
 
       if (!product.inCart) {
         product.inCart = true;
@@ -28,14 +39,15 @@ class ProductDetailsController extends GetxController {
         product.size = selectedSize;
 
         await cartController.addProductToCart(product);
-        Get.snackbar('Корзина', '${product.name ?? "Товар"} добавлен');
+        cartController.syncProductState(product);
+        Get.snackbar('Cart', '${product.name ?? "Product"} added');
       } else {
-        Get.snackbar('Корзина', '${product.name ?? "Товар"} уже в корзине');
+        Get.snackbar('Cart', '${product.name ?? "Product"} is already in cart');
       }
 
       update(['CartButton']);
     } catch (e) {
-      Get.snackbar('Ошибка', 'Не удалось добавить товар: $e');
+      Get.snackbar('Error', 'Failed to add product: $e');
     }
   }
 

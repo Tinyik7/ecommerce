@@ -46,7 +46,7 @@ class CartView extends GetView<CartController> {
                         12.horizontalSpace,
                         Expanded(
                           child: Text(
-                            'Нет связи с сервером, показываем сохранённые данные',
+                            'No connection to server, showing saved data',
                             style: theme.textTheme.bodySmall,
                           ),
                         ),
@@ -149,3 +149,5 @@ class CartView extends GetView<CartController> {
     );
   }
 }
+
+

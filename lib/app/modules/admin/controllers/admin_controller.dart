@@ -54,7 +54,7 @@ class AdminController extends GetxController {
     } on ApiException catch (e) {
       Get.snackbar('Ошибка', e.message);
     } catch (e) {
-      Get.snackbar('РћС€РёР±РєР°', 'РќРµ СѓРґР°Р»РѕСЃСЊ Р·Р°РіСЂСѓР·РёС‚СЊ С‚РѕРІР°СЂС‹: $e');
+      Get.snackbar('Error', 'Failed to load products: $e');
     } finally {
       isLoading = false;
       update();
@@ -141,14 +141,14 @@ class AdminController extends GetxController {
       if (response.statusCode == 200 || response.statusCode == 201) {
         await fetchProducts();
         Get.back();
-        Get.snackbar('Р“РѕС‚РѕРІРѕ', 'РўРѕРІР°СЂ СЃРѕС…СЂР°РЅС‘РЅ');
+        Get.snackbar('Done', 'Product saved');
       } else {
         throw Exception(response.body);
       }
     } on ApiException catch (e) {
       Get.snackbar('Ошибка', e.message);
     } catch (e) {
-      Get.snackbar('РћС€РёР±РєР°', 'РќРµ СѓРґР°Р»РѕСЃСЊ СЃРѕС…СЂР°РЅРёС‚СЊ: $e');
+      Get.snackbar('Error', 'Failed to save product: $e');
     } finally {
       isSubmitting = false;
       update();
@@ -165,14 +165,14 @@ class AdminController extends GetxController {
       );
       if (response.statusCode == 200 || response.statusCode == 204) {
         products.removeWhere((p) => p.id == id);
-        Get.snackbar('РЈРґР°Р»РµРЅРѕ', 'РўРѕРІР°СЂ СѓРґР°Р»С‘РЅ');
+        Get.snackbar('Removed', 'Product removed');
       } else {
         throw Exception(response.body);
       }
     } on ApiException catch (e) {
       Get.snackbar('Ошибка', e.message);
     } catch (e) {
-      Get.snackbar('РћС€РёР±РєР°', 'РќРµ СѓРґР°Р»РѕСЃСЊ СѓРґР°Р»РёС‚СЊ: $e');
+      Get.snackbar('Error', 'Failed to remove product: $e');
     } finally {
       isSubmitting = false;
       update();
