@@ -27,3 +27,78 @@ jobs:
           cd "$BACKEND_DIR"
           chmod +x mvnw
           ./mvnw test
+
+  smoke:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Locate backend and run docker smoke checks
+        run: |
+          BACKEND_DIR="$(find . -maxdepth 3 -type f -name docker-compose.yml -path '*ckend/*' | head -n 1 | xargs dirname)"
+          if [ -z "$BACKEND_DIR" ]; then
+            echo "Backend directory with docker-compose.yml was not found"
+            exit 1
+          fi
+          echo "Using backend dir: $BACKEND_DIR"
+          cd "$BACKEND_DIR"
+
+          docker compose up -d --build
+          trap 'docker compose logs backend || true; docker compose down -v || true' EXIT
+
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:8080/actuator/health >/dev/null; then
+              break
+            fi
+            if [ "$i" -eq 30 ]; then
+              echo "Backend health endpoint did not become ready in time"
+              exit 1
+            fi
+            sleep 5
+          done
+
+          ADMIN_LOGIN="$(curl -fsS -X POST http://localhost:8080/api/v1/users/login \
+            -H 'Content-Type: application/json' \
+            -d '{\"email\":\"admin@example.com\",\"password\":\"admin123\"}')"
+          ADMIN_TOKEN="$(echo "$ADMIN_LOGIN" | sed -n 's/.*\"token\":\"\([^\"]*\)\".*/\1/p')"
+          if [ -z "$ADMIN_TOKEN" ]; then
+            echo "Failed to obtain admin token"
+            exit 1
+          fi
+
+          CREATE_CODE="$(curl -s -o /tmp/create_resp.json -w '%{http_code}' \
+            -X POST http://localhost:8080/api/v1/products \
+            -H 'Content-Type: application/json' \
+            -H \"Authorization: Bearer $ADMIN_TOKEN\" \
+            -d '{\"name\":\"CI Smoke Product\",\"price\":10.0,\"quantity\":1}')"
+          if [ "$CREATE_CODE" != "200" ] && [ "$CREATE_CODE" != "201" ]; then
+            echo "Admin create product failed with HTTP $CREATE_CODE"
+            cat /tmp/create_resp.json
+            exit 1
+          fi
+
+          STAMP="$(date +%s)"
+          USER_EMAIL="ci-user-$STAMP@example.com"
+          USERNAME="ciuser$STAMP"
+          curl -fsS -X POST http://localhost:8080/api/v1/users/register \
+            -H 'Content-Type: application/json' \
+            -d "{\"username\":\"$USERNAME\",\"name\":\"CI User\",\"email\":\"$USER_EMAIL\",\"password\":\"user12345\"}" >/dev/null
+          USER_LOGIN="$(curl -fsS -X POST http://localhost:8080/api/v1/users/login \
+            -H 'Content-Type: application/json' \
+            -d "{\"email\":\"$USER_EMAIL\",\"password\":\"user12345\"}")"
+          USER_TOKEN="$(echo "$USER_LOGIN" | sed -n 's/.*\"token\":\"\([^\"]*\)\".*/\1/p')"
+          if [ -z "$USER_TOKEN" ]; then
+            echo "Failed to obtain user token"
+            exit 1
+          fi
+
+          FORBIDDEN_CODE="$(curl -s -o /tmp/forbidden_resp.json -w '%{http_code}' \
+            -X POST http://localhost:8080/api/v1/products \
+            -H 'Content-Type: application/json' \
+            -H \"Authorization: Bearer $USER_TOKEN\" \
+            -d '{\"name\":\"Forbidden\",\"price\":10.0,\"quantity\":1}')"
+          if [ "$FORBIDDEN_CODE" != "403" ]; then
+            echo "Expected 403 for USER product create, got $FORBIDDEN_CODE"
+            cat /tmp/forbidden_resp.json
+            exit 1
+          fi

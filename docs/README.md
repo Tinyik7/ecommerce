@@ -11,6 +11,7 @@ This folder collects everything needed for the semester rubric: idea brief, UX a
 | `api.md` | REST endpoints, request/response examples, Swagger/Postman notes. |
 | `database.md` | ER diagram, table structure, CRUD/validation details. |
 | `testing.md` | Checklist for API, mobile flows, Postman and device tests. |
+| `defense.md` | Rubric-to-implementation mapping, architecture snapshot, defense script. |
 | `postman/ecommerce_api.postman_collection.json` | Ready-to-import Postman collection covering the documented API. |
 
 Use this directory during the pre-defense to quickly point reviewers to the requested artefacts.

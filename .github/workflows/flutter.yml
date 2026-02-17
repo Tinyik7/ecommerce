@@ -38,3 +38,10 @@ jobs:
           else
             echo "No Flutter tests found, skipping."
           fi
+      - name: Integration tests
+        run: |
+          if [ -d integration_test ] && find integration_test -name '*_test.dart' -print -quit | grep -q .; then
+            flutter test integration_test
+          else
+            echo "No integration tests found, skipping."
+          fi

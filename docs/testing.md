@@ -36,9 +36,11 @@
 
 - Backend command: `./mvnw test`
 - Flutter command: `flutter test`
+- Flutter integration command: `flutter test integration_test -d windows` (local)
 - Current status:
-  - Last backend run: `2026-02-13`, `BUILD SUCCESS`, `Tests run: 12, Failures: 0, Errors: 0`.
-  - Last flutter run: `2026-02-13`, `All tests passed` (`forgot_password_controller_test`, `forgot_password_view_test`).
+  - Last backend run: `2026-02-17`, `BUILD SUCCESS`, `Tests run: 13, Failures: 0, Errors: 0`.
+  - Last flutter run: `2026-02-17`, `All tests passed` (`forgot_password_controller_test`, `forgot_password_view_test`).
+  - Last integration run: `2026-02-17`, `All tests passed` (`integration_test/auth_flow_integration_test.dart`).
   - `BackendApplicationTests` uses `test` profile (H2 in-memory DB).
   - `UserServiceTests` and `ProductServiceTests` cover core business flows.
   - `SecurityIntegrationTests` cover role checks and access isolation:
@@ -52,6 +54,16 @@
   - Flutter tests cover:
     - email/token/password validation rules in forgot-password controller;
     - forgot-password screen fields/buttons render correctly.
+  - Flutter integration tests cover:
+    - forgot-password screen lifecycle + required-field validation path.
+
+### 3.1 CI Smoke Validation
+
+- Backend CI smoke workflow now verifies:
+  - containerized startup via `docker compose up --build -d`;
+  - `GET /actuator/health` readiness;
+  - ADMIN login and product create (`200/201`);
+  - USER login and forbidden product create (`403`).
 
 ### 4. Seed Verification
 
