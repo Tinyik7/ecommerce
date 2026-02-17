@@ -32,6 +32,10 @@
    - `POST /api/v1/products` without ADMIN -> `403`.
    - `PUT /api/v1/users/{id}/role` without ADMIN -> `403`.
    - `GET /api/v1/cart/{userId}` with mismatched token user -> `403`.
+6. Verify GraphQL:
+   - `POST /graphql` query `products` works without auth.
+   - GraphQL mutation `createProduct` as USER returns errors.
+   - GraphQL mutation `createProduct` as ADMIN succeeds.
 
 ### 3. Automated Tests
 
@@ -39,7 +43,7 @@
 - Flutter command: `flutter test`
 - Flutter integration command: `flutter test integration_test -d windows` (local)
 - Current status:
-  - Last backend run: `2026-02-17`, `BUILD SUCCESS`, `Tests run: 13, Failures: 0, Errors: 0`.
+  - Last backend run: `2026-02-17`, `BUILD SUCCESS`, `Tests run: 16, Failures: 0, Errors: 0`.
   - Last flutter run: `2026-02-17`, `All tests passed` (`forgot_password_controller_test`, `forgot_password_view_test`).
   - Last integration run: `2026-02-17`, `All tests passed` (`integration_test/auth_flow_integration_test.dart`).
   - `BackendApplicationTests` uses `test` profile (H2 in-memory DB).
@@ -52,6 +56,10 @@
   - `ValidationIntegrationTests` cover request validation and error format:
     - invalid `POST /api/v1/users/register` -> `400` with field-level `details`.
     - invalid `POST /api/v1/users/login` -> `400` with field-level `details`.
+  - `GraphQlIntegrationTests` cover:
+    - public `products` query;
+    - forbidden mutation for USER;
+    - successful mutation for ADMIN.
   - Flutter tests cover:
     - email/token/password validation rules in forgot-password controller;
     - forgot-password screen fields/buttons render correctly.

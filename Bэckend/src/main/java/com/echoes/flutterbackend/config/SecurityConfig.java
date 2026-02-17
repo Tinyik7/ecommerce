@@ -46,6 +46,9 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/api/docs/**",
+                                "/graphql",
+                                "/graphiql",
+                                "/graphiql/**",
                                 "/actuator/health",
                                 "/ws/**",
                                 "/uploads/**"

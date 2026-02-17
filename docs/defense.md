@@ -46,7 +46,7 @@ flowchart LR
 | REST API + auth | Done | JWT + documented endpoints |
 | Response parsing/errors/timeouts | Done | `lib/app/data/services/api_client.dart` |
 | WebSocket/realtime | Done | `ws://localhost:8080/ws/products`, auto-refresh in `HomeController` |
-| GraphQL | Not implemented | optional next extension |
+| GraphQL | Done | `/graphql`, `/graphiql`, role-protected mutations |
 | FTP/SFTP | Not implemented | optional next extension |
 | Network logging/monitoring | Partial | server logs + actuator health; no external APM |
 | Server-client contracts | Done | `docs/api.md`, DTO validation |

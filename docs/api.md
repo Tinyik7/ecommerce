@@ -5,6 +5,8 @@
 - OpenAPI JSON: `http://localhost:8080/api/docs`
 - Auth: `Authorization: Bearer <token>`
 - Realtime WebSocket: `ws://localhost:8080/ws/products`
+- GraphQL endpoint: `http://localhost:8080/graphql`
+- GraphiQL UI: `http://localhost:8080/graphiql`
 
 ## Access Rules
 
@@ -168,6 +170,42 @@
 }
 ```
 - Event types: `CREATED`, `UPDATED`, `DELETED`.
+
+## GraphQL
+
+- Endpoint: `POST /graphql`
+- Public queries:
+  - `products(...)`
+  - `productById(id: ID!)`
+- Admin mutations:
+  - `createProduct(input: ProductInput!)`
+  - `updateProduct(id: ID!, input: ProductInput!)`
+  - `deleteProduct(id: ID!)`
+
+Query example:
+```graphql
+query {
+  products(page: 0, size: 5, sortBy: "createdAt", sortDir: "desc") {
+    totalElements
+    items {
+      id
+      name
+      price
+    }
+  }
+}
+```
+
+Mutation example:
+```graphql
+mutation {
+  createProduct(input: {name: "GraphQL Product", price: 12.5, quantity: 3}) {
+    id
+    name
+    price
+  }
+}
+```
 
 ## Favorites Endpoints
 

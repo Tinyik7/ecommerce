@@ -1,0 +1,72 @@
+type Query {
+  productById(id: ID!): Product
+  products(
+    query: String
+    category: String
+    minPrice: Float
+    maxPrice: Float
+    minRating: Float
+    inStock: Boolean
+    onlyFavorites: Boolean
+    page: Int = 0
+    size: Int = 20
+    sortBy: String = "createdAt"
+    sortDir: String = "desc"
+  ): ProductPage!
+}
+
+type Mutation {
+  createProduct(input: ProductInput!): Product!
+  updateProduct(id: ID!, input: ProductInput!): Product!
+  deleteProduct(id: ID!): Boolean!
+}
+
+type ProductPage {
+  items: [Product!]!
+  totalElements: Int!
+  totalPages: Int!
+  page: Int!
+  size: Int!
+  hasNext: Boolean!
+}
+
+type Product {
+  id: ID
+  name: String
+  description: String
+  image: String
+  quantity: Int
+  price: Float
+  rating: Float
+  reviews: String
+  size: String
+  isFavorite: Boolean
+  inCart: Boolean
+  category: String
+  brand: String
+  color: String
+  featured: Boolean
+  discount: Float
+  inStock: Boolean
+  createdAt: String
+  updatedAt: String
+}
+
+input ProductInput {
+  name: String!
+  description: String
+  image: String
+  quantity: Int
+  price: Float!
+  rating: Float
+  reviews: String
+  size: String
+  isFavorite: Boolean
+  inCart: Boolean
+  category: String
+  brand: String
+  color: String
+  featured: Boolean
+  discount: Float
+  inStock: Boolean
+}
