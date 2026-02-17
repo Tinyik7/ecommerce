@@ -36,6 +36,13 @@
    - `POST /graphql` query `products` works without auth.
    - GraphQL mutation `createProduct` as USER returns errors.
    - GraphQL mutation `createProduct` as ADMIN succeeds.
+7. Verify FTP/SFTP (ADMIN):
+   - Enable env vars in backend (`APP_SFTP_*` or `APP_FTP_*`).
+   - `POST /api/v1/transfer/sftp/test` -> `200` when SFTP is reachable.
+   - `POST /api/v1/transfer/sftp/upload` with `multipart file` -> `200` and returned remote path.
+   - `POST /api/v1/transfer/ftp/test` -> `200` when FTP is reachable.
+   - `POST /api/v1/transfer/ftp/upload` with `multipart file` -> `200` and returned remote path.
+   - Call same endpoints as USER -> `403`.
 
 ### 3. Automated Tests
 

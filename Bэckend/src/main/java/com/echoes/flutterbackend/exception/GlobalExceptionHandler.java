@@ -7,6 +7,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -69,6 +71,12 @@ public class GlobalExceptionHandler {
         HttpStatus status = HttpStatus.valueOf(ex.getStatusCode().value());
         log.warn("Request failed with status {}: {}", status.value(), ex.getReason());
         return build(status, ex.getReason() != null ? ex.getReason() : "Request failed");
+    }
+
+    @ExceptionHandler({AccessDeniedException.class, AuthorizationDeniedException.class})
+    public ResponseEntity<ProblemResponse> handleAccessDenied(Exception ex) {
+        log.warn("Access denied: {}", ex.getMessage());
+        return build(HttpStatus.FORBIDDEN, "Access denied");
     }
 
     @ExceptionHandler(Exception.class)

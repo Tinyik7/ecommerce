@@ -47,7 +47,7 @@ flowchart LR
 | Response parsing/errors/timeouts | Done | `lib/app/data/services/api_client.dart` |
 | WebSocket/realtime | Done | `ws://localhost:8080/ws/products`, auto-refresh in `HomeController` |
 | GraphQL | Done | `/graphql`, `/graphiql`, role-protected mutations |
-| FTP/SFTP | Not implemented | optional next extension |
+| FTP/SFTP | Done | admin-only `/api/v1/transfer/*` with FTP/SFTP test+upload |
 | Network logging/monitoring | Partial | server logs + actuator health; no external APM |
 | Server-client contracts | Done | `docs/api.md`, DTO validation |
 | DB operations/transactions | Done | transactional services |

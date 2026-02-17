@@ -23,6 +23,7 @@
 - Admin only:
   - product write endpoints (`POST/PUT/DELETE`)
   - role update endpoint
+  - FTP/SFTP transfer endpoints
 
 ## User Endpoints
 
@@ -206,6 +207,25 @@ mutation {
   }
 }
 ```
+
+## FTP / SFTP Endpoints (Admin)
+
+- `POST /api/v1/transfer/sftp/test`
+- `POST /api/v1/transfer/sftp/upload` (`multipart/form-data`: `file`, optional `remotePath`)
+- `POST /api/v1/transfer/ftp/test`
+- `POST /api/v1/transfer/ftp/upload` (`multipart/form-data`: `file`, optional `remotePath`)
+
+Required env configuration:
+
+- SFTP:
+  - `APP_SFTP_ENABLED=true`
+  - `APP_SFTP_HOST`, `APP_SFTP_PORT`, `APP_SFTP_USERNAME`, `APP_SFTP_PASSWORD`
+  - optional `APP_SFTP_REMOTE_DIR` (default `/upload`)
+- FTP:
+  - `APP_FTP_ENABLED=true`
+  - `APP_FTP_HOST`, `APP_FTP_PORT`, `APP_FTP_USERNAME`, `APP_FTP_PASSWORD`
+  - optional `APP_FTP_REMOTE_DIR` (default `/upload`)
+  - optional `APP_FTP_PASSIVE=true`
 
 ## Favorites Endpoints
 

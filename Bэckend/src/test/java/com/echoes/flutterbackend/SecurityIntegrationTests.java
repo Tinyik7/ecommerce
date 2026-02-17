@@ -104,4 +104,11 @@ class SecurityIntegrationTests {
                         .header("Authorization", "Bearer " + userToken))
                 .andExpect(status().isForbidden());
     }
+
+    @Test
+    void userCannotUseTransferEndpoints() throws Exception {
+        mockMvc.perform(post("/api/v1/transfer/sftp/test")
+                        .header("Authorization", "Bearer " + userToken))
+                .andExpect(status().isForbidden());
+    }
 }
