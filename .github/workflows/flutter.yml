@@ -41,11 +41,10 @@ jobs:
       - name: Integration tests
         run: |
           if [ -d integration_test ] && find integration_test -name '*_test.dart' -print -quit | grep -q .; then
-            DEVICE_ID="$(flutter devices | awk -F'•' '/•/{gsub(/ /,"",$2); if($2!=""){print $2; exit}}')"
-            if [ -n "$DEVICE_ID" ]; then
-              flutter test integration_test -d "$DEVICE_ID"
+            if flutter devices | grep -qi 'chrome'; then
+              flutter test integration_test -d chrome
             else
-              echo "No device available for integration_test, skipping."
+              echo "Chrome device not available for integration_test, skipping."
             fi
           else
             echo "No integration tests found, skipping."
