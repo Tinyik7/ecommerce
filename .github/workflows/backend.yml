@@ -64,7 +64,7 @@ jobs:
 
           ADMIN_LOGIN="$(curl -fsS -X POST http://localhost:8080/api/v1/users/login \
             -H 'Content-Type: application/json' \
-            -d '{\"email\":\"admin@example.com\",\"password\":\"admin123\"}')"
+            -d '{"email":"admin@example.com","password":"admin123"}')"
           ADMIN_TOKEN="$(echo "$ADMIN_LOGIN" | sed -n 's/.*\"token\":\"\([^\"]*\)\".*/\1/p')"
           if [ -z "$ADMIN_TOKEN" ]; then
             echo "Failed to obtain admin token"
@@ -75,7 +75,7 @@ jobs:
             -X POST http://localhost:8080/api/v1/products \
             -H 'Content-Type: application/json' \
             -H \"Authorization: Bearer $ADMIN_TOKEN\" \
-            -d '{\"name\":\"CI Smoke Product\",\"price\":10.0,\"quantity\":1}')"
+            -d '{"name":"CI Smoke Product","price":10.0,"quantity":1}')"
           if [ "$CREATE_CODE" != "200" ] && [ "$CREATE_CODE" != "201" ]; then
             echo "Admin create product failed with HTTP $CREATE_CODE"
             cat /tmp/create_resp.json
@@ -101,7 +101,7 @@ jobs:
             -X POST http://localhost:8080/api/v1/products \
             -H 'Content-Type: application/json' \
             -H \"Authorization: Bearer $USER_TOKEN\" \
-            -d '{\"name\":\"Forbidden\",\"price\":10.0,\"quantity\":1}')"
+            -d '{"name":"Forbidden","price":10.0,"quantity":1}')"
           if [ "$FORBIDDEN_CODE" != "403" ]; then
             echo "Expected 403 for USER product create, got $FORBIDDEN_CODE"
             cat /tmp/forbidden_resp.json
