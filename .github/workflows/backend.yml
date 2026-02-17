@@ -18,13 +18,13 @@ jobs:
           cache: maven
       - name: Locate backend and run tests
         run: |
-          if [ -f "./Bэckend/mvnw" ]; then
-            BACKEND_DIR="./Bэckend"
-          elif [ -f "./backend/mvnw" ]; then
-            BACKEND_DIR="./backend"
-          else
-            BACKEND_DIR="$(find . -maxdepth 4 -type f -name mvnw | head -n 1 | xargs dirname)"
-          fi
+          BACKEND_DIR=""
+          for d in ./backend ./B*ckend .; do
+            if [ -f "$d/mvnw" ]; then
+              BACKEND_DIR="$d"
+              break
+            fi
+          done
           if [ -z "$BACKEND_DIR" ]; then
             echo "Backend directory with mvnw was not found"
             exit 1
@@ -41,13 +41,13 @@ jobs:
       - uses: actions/checkout@v4
       - name: Locate backend and run docker smoke checks
         run: |
-          if [ -f "./Bэckend/docker-compose.yml" ]; then
-            BACKEND_DIR="./Bэckend"
-          elif [ -f "./backend/docker-compose.yml" ]; then
-            BACKEND_DIR="./backend"
-          else
-            BACKEND_DIR="$(find . -maxdepth 4 -type f -name docker-compose.yml | head -n 1 | xargs dirname)"
-          fi
+          BACKEND_DIR=""
+          for d in ./backend ./B*ckend .; do
+            if [ -f "$d/docker-compose.yml" ]; then
+              BACKEND_DIR="$d"
+              break
+            fi
+          done
           if [ -z "$BACKEND_DIR" ]; then
             echo "Backend directory with docker-compose.yml was not found"
             exit 1
@@ -86,7 +86,7 @@ jobs:
           CREATE_CODE="$(curl -s -o /tmp/create_resp.json -w '%{http_code}' \
             -X POST http://localhost:8080/api/v1/products \
             -H 'Content-Type: application/json' \
-            -H \"Authorization: Bearer $ADMIN_TOKEN\" \
+            -H "Authorization: Bearer $ADMIN_TOKEN" \
             -d '{"name":"CI Smoke Product","price":10.0,"quantity":1}')"
           if [ "$CREATE_CODE" != "200" ] && [ "$CREATE_CODE" != "201" ]; then
             echo "Admin create product failed with HTTP $CREATE_CODE"
@@ -112,7 +112,7 @@ jobs:
           FORBIDDEN_CODE="$(curl -s -o /tmp/forbidden_resp.json -w '%{http_code}' \
             -X POST http://localhost:8080/api/v1/products \
             -H 'Content-Type: application/json' \
-            -H \"Authorization: Bearer $USER_TOKEN\" \
+            -H "Authorization: Bearer $USER_TOKEN" \
             -d '{"name":"Forbidden","price":10.0,"quantity":1}')"
           if [ "$FORBIDDEN_CODE" != "403" ]; then
             echo "Expected 403 for USER product create, got $FORBIDDEN_CODE"
