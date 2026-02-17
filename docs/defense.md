@@ -45,7 +45,7 @@ flowchart LR
 | --- | --- | --- |
 | REST API + auth | Done | JWT + documented endpoints |
 | Response parsing/errors/timeouts | Done | `lib/app/data/services/api_client.dart` |
-| WebSocket/realtime | Not implemented | optional next extension |
+| WebSocket/realtime | Done | `ws://localhost:8080/ws/products`, auto-refresh in `HomeController` |
 | GraphQL | Not implemented | optional next extension |
 | FTP/SFTP | Not implemented | optional next extension |
 | Network logging/monitoring | Partial | server logs + actuator health; no external APM |
@@ -73,4 +73,5 @@ flowchart LR
 4. Show USER blocked on `POST /api/v1/products` (`403`).
 5. Login as ADMIN, create product successfully.
 6. In mobile app: edit profile, change password, forgot-password token flow.
-7. Show test evidence: backend tests, flutter tests, CI checks.
+7. Keep Home screen open and create/update/delete product as ADMIN to show realtime WebSocket updates.
+8. Show test evidence: backend tests, flutter tests, CI checks.

@@ -47,6 +47,7 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/api/docs/**",
                                 "/actuator/health",
+                                "/ws/**",
                                 "/uploads/**"
                         ).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/products/**").permitAll()

@@ -3,11 +3,13 @@ package com.echoes.flutterbackend.service;
 import com.echoes.flutterbackend.dto.PageResponse;
 import com.echoes.flutterbackend.dto.ProductFilter;
 import com.echoes.flutterbackend.dto.ProductMapper;
+import com.echoes.flutterbackend.dto.ProductRealtimeEvent;
 import com.echoes.flutterbackend.dto.ProductRequest;
 import com.echoes.flutterbackend.dto.ProductResponse;
 import com.echoes.flutterbackend.entity.Product;
 import com.echoes.flutterbackend.repository.ProductRepository;
 import com.echoes.flutterbackend.repository.spec.ProductSpecifications;
+import com.echoes.flutterbackend.websocket.ProductUpdatesWebSocketHandler;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,6 +23,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.time.Instant;
 import java.util.UUID;
 
 @Service
@@ -28,10 +31,13 @@ import java.util.UUID;
 public class ProductService {
     private final ProductRepository repository;
     private final Path uploadDirectory;
+    private final ProductUpdatesWebSocketHandler productUpdatesWebSocketHandler;
 
     public ProductService(ProductRepository repository,
+                          ProductUpdatesWebSocketHandler productUpdatesWebSocketHandler,
                           @Value("${app.upload-dir:uploads}") String uploadDir) {
         this.repository = repository;
+        this.productUpdatesWebSocketHandler = productUpdatesWebSocketHandler;
         this.uploadDirectory = Path.of(uploadDir).toAbsolutePath();
     }
 
@@ -57,6 +63,7 @@ public class ProductService {
             product.setImage(saveImage(image));
         }
         Product saved = repository.save(product);
+        publishRealtimeEvent("CREATED", saved.getId(), saved.getName());
         return ProductMapper.toResponse(saved);
     }
 
@@ -71,6 +78,7 @@ public class ProductService {
 
         ProductMapper.updateEntity(product, request);
         Product updated = repository.save(product);
+        publishRealtimeEvent("UPDATED", updated.getId(), updated.getName());
         return ProductMapper.toResponse(updated);
     }
 
@@ -80,6 +88,13 @@ public class ProductService {
             throw new EntityNotFoundException("Product not found: " + id);
         }
         repository.deleteById(id);
+        publishRealtimeEvent("DELETED", id, null);
+    }
+
+    private void publishRealtimeEvent(String type, Long productId, String productName) {
+        productUpdatesWebSocketHandler.broadcast(
+                new ProductRealtimeEvent(type, productId, productName, Instant.now())
+        );
     }
 
     private String saveImage(MultipartFile image) throws IOException {

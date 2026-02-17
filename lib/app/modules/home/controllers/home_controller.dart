@@ -7,10 +7,12 @@ import 'package:get/get.dart';
 import '../../../data/local/local_database_service.dart';
 import '../../../data/models/product_model.dart';
 import '../../../data/services/api_client.dart';
+import '../../../data/services/realtime_service.dart';
 
 class HomeController extends GetxController {
   final searchCtrl = TextEditingController();
   Timer? _searchDebounce;
+  StreamSubscription<Map<String, dynamic>>? _realtimeSubscription;
 
   final List<ProductModel> _products = <ProductModel>[];
   final RxList<ProductModel> visibleProducts = <ProductModel>[].obs;
@@ -32,13 +34,28 @@ class HomeController extends GetxController {
   void onInit() {
     super.onInit();
     fetchProducts();
+    RealtimeService.instance.connect();
+    _realtimeSubscription = RealtimeService.instance.events.listen(_onRealtimeEvent);
   }
 
   @override
   void onClose() {
+    _realtimeSubscription?.cancel();
+    RealtimeService.instance.disconnect();
     searchCtrl.dispose();
     _searchDebounce?.cancel();
     super.onClose();
+  }
+
+  void _onRealtimeEvent(Map<String, dynamic> event) {
+    final type = event['type']?.toString();
+    if (type == null || type.isEmpty) return;
+
+    final name = event['productName']?.toString() ?? 'Product';
+    if (type == 'CREATED' || type == 'UPDATED' || type == 'DELETED') {
+      fetchProducts(showLoader: false);
+      Get.snackbar('Realtime update', '$type: $name');
+    }
   }
 
   Future<void> fetchProducts({bool showLoader = true}) async {

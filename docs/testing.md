@@ -11,6 +11,7 @@
 | Favorites | Tap heart on product -> open Favorites tab | Item displayed, untapping removes it. |
 | Profile update | Open Profile -> Edit profile -> Save | Updated username/email/name is persisted and shown in Profile and Settings. |
 | Password update | Open Profile -> Change password | Password changes when current password is correct. |
+| Realtime updates | Keep Home open; create/update/delete product as ADMIN in Swagger/Postman | Home list refreshes automatically and shows realtime snackbar. |
 
 ### 2. API / Backend
 

@@ -4,6 +4,7 @@
 - Swagger UI: `http://localhost:8080/swagger`
 - OpenAPI JSON: `http://localhost:8080/api/docs`
 - Auth: `Authorization: Bearer <token>`
+- Realtime WebSocket: `ws://localhost:8080/ws/products`
 
 ## Access Rules
 
@@ -153,6 +154,20 @@
 
 ### Delete (Admin)
 - `DELETE /api/v1/products/{id}`
+
+## Realtime Endpoint
+
+- WebSocket endpoint: `GET ws://localhost:8080/ws/products`
+- Payload format:
+```json
+{
+  "type": "CREATED",
+  "productId": 123,
+  "productName": "CI Smoke Product",
+  "timestamp": "2026-02-17T10:00:00Z"
+}
+```
+- Event types: `CREATED`, `UPDATED`, `DELETED`.
 
 ## Favorites Endpoints
 
