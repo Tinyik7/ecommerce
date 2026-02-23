@@ -38,21 +38,10 @@ jobs:
           else
             echo "No Flutter tests found, skipping."
           fi
-      - name: Install Linux desktop dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libgtk-3-dev ninja-build cmake pkg-config
       - name: Integration tests
         run: |
           if [ -d integration_test ] && find integration_test -name '*_test.dart' -print -quit | grep -q .; then
-            flutter config --enable-linux-desktop
-            DEVICES="$(flutter devices || true)"
-            echo "$DEVICES"
-            if echo "$DEVICES" | grep -qi 'Linux (desktop)'; then
-              flutter test integration_test -d linux
-            else
-              echo "Linux desktop device not available for integration_test, skipping."
-            fi
+            flutter test integration_test
           else
             echo "No integration tests found, skipping."
           fi
