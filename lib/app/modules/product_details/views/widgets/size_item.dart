@@ -28,7 +28,7 @@ class SizeItem extends StatelessWidget {
               ? null
               : [
                   BoxShadow(
-                    color: const Color(0xFF0FDA89).withValues(alpha: 0.3),
+                    color: theme.primaryColor.withValues(alpha: 0.3),
                     blurRadius: 4,
                     spreadRadius: 0,
                     offset: const Offset(0, 2),
@@ -39,10 +39,9 @@ class SizeItem extends StatelessWidget {
           child: Text(
             label,
             style: theme.textTheme.displaySmall?.copyWith(
-              fontSize: 12.sp,
-              fontWeight: FontWeight.bold,
-              color: selected ? Colors.white : null
-            ),
+                fontSize: 12.sp,
+                fontWeight: FontWeight.bold,
+                color: selected ? Colors.white : null),
           ),
         ),
       ),

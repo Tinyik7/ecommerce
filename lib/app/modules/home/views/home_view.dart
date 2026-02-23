@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
+import '../../../components/no_data.dart';
 import '../../../components/product_item.dart';
 import '../../../components/screen_title.dart';
 import '../controllers/home_controller.dart';
@@ -11,30 +12,17 @@ class HomeView extends GetView<HomeController> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = context.theme;
-
     return Scaffold(
       body: Padding(
         padding: EdgeInsets.symmetric(horizontal: 20.w),
         child: Obx(() {
-          if (controller.isLoading.value &&
-              controller.visibleProducts.isEmpty) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
           if (controller.hasError.value && controller.visibleProducts.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text('load_products_error'.tr),
-                  const SizedBox(height: 12),
-                  ElevatedButton(
-                    onPressed: controller.fetchProducts,
-                    child: Text('retry'.tr),
-                  ),
-                ],
-              ),
+            return NoData(
+              text: 'load_products_error'.tr,
+              subtitle: 'home_try_refresh'.tr,
+              icon: Icons.cloud_off_rounded,
+              actionLabel: 'retry'.tr,
+              onAction: controller.fetchProducts,
             );
           }
 
@@ -42,32 +30,37 @@ class HomeView extends GetView<HomeController> {
             onRefresh: controller.fetchProducts,
             child: ListView(
               children: [
-                30.verticalSpace,
+                24.verticalSpace,
                 ScreenTitle(title: 'home'.tr),
                 if (controller.isOffline.value) ...[
-                  12.verticalSpace,
-                  _OfflineBanner(theme: theme),
+                  10.verticalSpace,
+                  _StatusBanner(
+                    text: 'offline_cached_data'.tr,
+                    icon: Icons.cloud_off_rounded,
+                  ),
                 ],
-                20.verticalSpace,
-                _SearchField(controller: controller),
+                if (controller.isLoading.value &&
+                    controller.visibleProducts.isNotEmpty) ...[
+                  10.verticalSpace,
+                  const LinearProgressIndicator(),
+                ],
                 16.verticalSpace,
-                _FilterBar(controller: controller),
-                12.verticalSpace,
-                _ActiveFilters(controller: controller),
-                12.verticalSpace,
-                _CategoryWrap(controller: controller),
-                12.verticalSpace,
-                _InStockSwitch(controller: controller),
-                20.verticalSpace,
-                if (controller.visibleProducts.isEmpty)
-                  Padding(
-                    padding: EdgeInsets.only(top: 100.h),
-                    child: Center(
-                      child: Text(
-                        'no_data'.tr,
-                        style: theme.textTheme.bodyLarge,
-                      ),
-                    ),
+                _FilterCard(controller: controller),
+                18.verticalSpace,
+                if (controller.isLoading.value &&
+                    controller.visibleProducts.isEmpty)
+                  const _ProductsSkeletonGrid()
+                else if (controller.visibleProducts.isEmpty)
+                  NoData(
+                    text:
+                        _hasActiveFilters ? 'home_no_results'.tr : 'no_data'.tr,
+                    subtitle: _hasActiveFilters
+                        ? 'home_try_another_filters'.tr
+                        : 'home_empty_catalog'.tr,
+                    icon: Icons.search_off_rounded,
+                    actionLabel: _hasActiveFilters ? 'clear_filters'.tr : null,
+                    onAction:
+                        _hasActiveFilters ? controller.clearFilters : null,
                   )
                 else
                   GridView.builder(
@@ -75,7 +68,7 @@ class HomeView extends GetView<HomeController> {
                       crossAxisCount: 2,
                       crossAxisSpacing: 15.w,
                       mainAxisSpacing: 15.h,
-                      mainAxisExtent: 260.h,
+                      childAspectRatio: 0.62,
                     ),
                     shrinkWrap: true,
                     primary: false,
@@ -85,11 +78,55 @@ class HomeView extends GetView<HomeController> {
                       return ProductItem(product: product);
                     },
                   ),
-                10.verticalSpace,
+                12.verticalSpace,
               ],
             ),
           );
         }),
+      ),
+    );
+  }
+
+  bool get _hasActiveFilters {
+    return controller.searchQuery.isNotEmpty ||
+        controller.selectedCategory != null ||
+        controller.minPriceFilter != null ||
+        controller.maxPriceFilter != null ||
+        controller.inStockOnly;
+  }
+}
+
+class _FilterCard extends StatelessWidget {
+  final HomeController controller;
+
+  const _FilterCard({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(12.r),
+      decoration: BoxDecoration(
+        color: context.theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(18.r),
+        border: Border.all(
+          color:
+              context.theme.colorScheme.outlineVariant.withValues(alpha: 0.45),
+        ),
+      ),
+      child: Column(
+        children: [
+          _SearchField(controller: controller),
+          12.verticalSpace,
+          _FilterBar(controller: controller),
+          10.verticalSpace,
+          _ActiveFilters(controller: controller),
+          if (controller.categories.isNotEmpty) ...[
+            10.verticalSpace,
+            _CategoryWrap(controller: controller),
+          ],
+          8.verticalSpace,
+          _InStockSwitch(controller: controller),
+        ],
       ),
     );
   }
@@ -114,9 +151,6 @@ class _SearchField extends StatelessWidget {
                 onPressed: controller.clearFilters,
               )
             : null,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16.r),
-        ),
       ),
     );
   }
@@ -153,16 +187,17 @@ class _FilterBar extends StatelessWidget {
             ),
           ),
         ),
-        12.horizontalSpace,
+        8.horizontalSpace,
         OutlinedButton.icon(
           onPressed: () => _openPriceSheet(context, controller),
           icon: const Icon(Icons.price_change, size: 18),
           label: Text('price'.tr),
         ),
-        12.horizontalSpace,
+        6.horizontalSpace,
         IconButton(
           icon: const Icon(Icons.refresh),
           onPressed: controller.clearFilters,
+          tooltip: 'clear_filters'.tr,
         ),
       ],
     );
@@ -297,9 +332,6 @@ class _CategoryWrap extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (controller.categories.isEmpty) {
-      return const SizedBox.shrink();
-    }
     return Wrap(
       spacing: 8.w,
       runSpacing: 8.h,
@@ -323,6 +355,7 @@ class _InStockSwitch extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SwitchListTile(
+      contentPadding: EdgeInsets.zero,
       value: controller.inStockOnly,
       onChanged: controller.toggleInStock,
       title: Text('in_stock_only'.tr),
@@ -330,13 +363,15 @@ class _InStockSwitch extends StatelessWidget {
   }
 }
 
-class _OfflineBanner extends StatelessWidget {
-  const _OfflineBanner({required this.theme});
+class _StatusBanner extends StatelessWidget {
+  final String text;
+  final IconData icon;
 
-  final ThemeData theme;
+  const _StatusBanner({required this.text, required this.icon});
 
   @override
   Widget build(BuildContext context) {
+    final theme = context.theme;
     return Container(
       padding: EdgeInsets.all(12.w),
       decoration: BoxDecoration(
@@ -345,12 +380,63 @@ class _OfflineBanner extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.cloud_off),
-          12.horizontalSpace,
+          Icon(icon),
+          10.horizontalSpace,
           Expanded(
             child: Text(
-              'offline_cached_data'.tr,
+              text,
               style: theme.textTheme.bodyMedium,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProductsSkeletonGrid extends StatelessWidget {
+  const _ProductsSkeletonGrid();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = context.theme;
+    return GridView.builder(
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 15.w,
+        mainAxisSpacing: 15.h,
+        childAspectRatio: 0.62,
+      ),
+      shrinkWrap: true,
+      primary: false,
+      itemCount: 6,
+      itemBuilder: (_, __) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Container(
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(24.r),
+              ),
+            ),
+          ),
+          10.verticalSpace,
+          Container(
+            width: 100.w,
+            height: 12.h,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(8.r),
+            ),
+          ),
+          6.verticalSpace,
+          Container(
+            width: 70.w,
+            height: 12.h,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(8.r),
             ),
           ),
         ],

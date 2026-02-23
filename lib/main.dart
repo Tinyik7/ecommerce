@@ -67,12 +67,7 @@ Future<void> main() async {
             final bool themeIsLight = MySharedPref.getThemeIsLight();
             return Theme(
               data: MyTheme.getThemeData(isLight: themeIsLight),
-              child: MediaQuery(
-                data: MediaQuery.of(context).copyWith(
-                  textScaler: const TextScaler.linear(1.0),
-                ),
-                child: widget!,
-              ),
+              child: widget!,
             );
           },
           initialRoute: AppPages.INITIAL,

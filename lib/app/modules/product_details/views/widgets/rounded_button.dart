@@ -13,17 +13,18 @@ class RoundedButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = context.theme;
     return GestureDetector(
       onTap: onPressed,
       child: Container(
         width: 40.w,
         height: 40.h,
         decoration: BoxDecoration(
-          color: Get.theme.primaryColor,
+          color: theme.primaryColor,
           borderRadius: BorderRadius.circular(12.r),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF0FDA89).withValues(alpha: 0.3),
+              color: theme.primaryColor.withValues(alpha: 0.3),
               blurRadius: 4,
               spreadRadius: 0,
               offset: const Offset(0, 2),

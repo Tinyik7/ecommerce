@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
@@ -32,7 +32,7 @@ class CartItem extends StatelessWidget {
             child: Container(
               width: 105.w,
               height: 125.h,
-              color: const Color(0xFFEDF1FA),
+              color: theme.colorScheme.surfaceContainerHighest,
               child: imageUrl != null
                   ? Image.network(
                       imageUrl,
@@ -83,7 +83,7 @@ class CartItem extends StatelessWidget {
                         width: 22.w,
                         height: 22.h,
                         colorFilter: const ColorFilter.mode(
-                          Colors.black87,
+                          Colors.black54,
                           BlendMode.srcIn,
                         ),
                       ),
@@ -105,7 +105,7 @@ class CartItem extends StatelessWidget {
                         width: 22.w,
                         height: 22.h,
                         colorFilter: const ColorFilter.mode(
-                          Colors.black87,
+                          Colors.black54,
                           BlendMode.srcIn,
                         ),
                       ),
@@ -136,5 +136,3 @@ class CartItem extends StatelessWidget {
     );
   }
 }
-
-

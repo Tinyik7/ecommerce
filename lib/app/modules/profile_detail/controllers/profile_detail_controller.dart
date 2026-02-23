@@ -68,11 +68,11 @@ class ProfileDetailController extends GetxController {
         await MySharedPref.setUserRole(updated.role!);
       }
       _syncSettingsController(updated);
-      Get.snackbar('Готово', 'Профиль обновлён');
+      Get.snackbar('success_title'.tr, 'profile_updated'.tr);
     } on AuthConflictException catch (e) {
-      Get.snackbar('Ошибка', e.message);
+      Get.snackbar('error_title'.tr, e.message);
     } catch (e) {
-      Get.snackbar('Ошибка', e.toString());
+      Get.snackbar('error_title'.tr, e.toString());
     } finally {
       isSaving = false;
       update();
@@ -90,13 +90,13 @@ class ProfileDetailController extends GetxController {
         currentPassword: currentPassword,
         newPassword: newPassword,
       );
-      Get.snackbar('Готово', 'Пароль обновлён');
+      Get.snackbar('success_title'.tr, 'password_updated'.tr);
     } on InvalidCurrentPasswordException {
-      Get.snackbar('Ошибка', 'Неверный текущий пароль');
+      Get.snackbar('error_title'.tr, 'error_invalid_current_password'.tr);
     } on UnauthorizedException {
-      Get.snackbar('Ошибка', 'Сессия истекла, войдите заново');
+      Get.snackbar('error_title'.tr, 'error_session_expired'.tr);
     } catch (e) {
-      Get.snackbar('Ошибка', e.toString());
+      Get.snackbar('error_title'.tr, e.toString());
     } finally {
       isChangingPassword = false;
       update();

@@ -11,6 +11,7 @@ import '../routes/app_pages.dart';
 
 class ProductItem extends StatelessWidget {
   final ProductModel product;
+
   const ProductItem({
     super.key,
     required this.product,
@@ -19,67 +20,69 @@ class ProductItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = context.theme;
+    final imageUrl = _resolveImageUrl(product.image);
+
     return GestureDetector(
       onTap: () => Get.toNamed(Routes.PRODUCT_DETAILS, arguments: product),
-      child: SizedBox(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Stack(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Stack(
               children: [
                 Container(
                   width: double.infinity,
-                  height: 200.h,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEDF1FA),
-                    borderRadius: BorderRadius.circular(25.r),
+                    color: theme.colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(24.r),
                   ),
                 ),
-
-                // ✅ изменено здесь
-                if ((product.image ?? '').isNotEmpty)
-                  Positioned(
-                    right: product.id == 2 ? 0 : 20.w,
-                    bottom: -80.h,
-                    child: Image.network(
-                      product.image!,
-                      height: 260.h,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => 
-                          const Icon(Icons.broken_image, size: 64),
-                      loadingBuilder: (context, child, progress) {
-                        if (progress == null) return child;
-                        return const Center(child: CircularProgressIndicator());
-                      },
-                    ).animate().slideX(
-                          duration: const Duration(milliseconds: 200),
-                          begin: 1,
-                          curve: Curves.easeInSine,
-                        ),
+                if (imageUrl != null)
+                  Positioned.fill(
+                    child: Padding(
+                      padding: EdgeInsets.all(12.r),
+                      child: Image.network(
+                        imageUrl,
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) =>
+                            const Icon(Icons.broken_image, size: 48),
+                        loadingBuilder: (context, child, progress) {
+                          if (progress == null) return child;
+                          return const Center(
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          );
+                        },
+                      ).animate().fadeIn(
+                            duration: const Duration(milliseconds: 180),
+                          ),
+                    ),
                   ),
-
-                // ❤️ кнопка избранного
                 Positioned(
-                  left: 15.w,
-                  bottom: 20.h,
+                  left: 10.w,
+                  bottom: 10.h,
                   child: GetBuilder<BaseController>(
                     id: 'FavoriteButton',
-                    builder: (controller) => GestureDetector(
-                      onTap: () =>
-                          controller.onFavoriteButtonPressed(product: product),
-                      child: CircleAvatar(
-                        radius: 18.r,
-                        backgroundColor: Colors.white,
-                        child: SvgPicture.asset(
-                          (product.isFavorite ?? false)
-                              ? Constants.favFilledIcon
-                              : Constants.favOutlinedIcon,
-                          colorFilter: (product.isFavorite ?? false)
-                              ? null
-                              : ColorFilter.mode(
-                                  theme.primaryColor,
-                                  BlendMode.srcIn,
-                                ),
+                    builder: (controller) => Material(
+                      color: theme.colorScheme.surface,
+                      shape: const CircleBorder(),
+                      child: InkWell(
+                        customBorder: const CircleBorder(),
+                        onTap: () => controller.onFavoriteButtonPressed(
+                          product: product,
+                        ),
+                        child: Padding(
+                          padding: EdgeInsets.all(8.r),
+                          child: SvgPicture.asset(
+                            (product.isFavorite ?? false)
+                                ? Constants.favFilledIcon
+                                : Constants.favOutlinedIcon,
+                            colorFilter: (product.isFavorite ?? false)
+                                ? null
+                                : ColorFilter.mode(
+                                    theme.primaryColor,
+                                    BlendMode.srcIn,
+                                  ),
+                          ),
                         ),
                       ),
                     ),
@@ -87,30 +90,39 @@ class ProductItem extends StatelessWidget {
                 ).animate().fade(),
               ],
             ),
-            10.verticalSpace,
-            Text(product.name ?? '', style: theme.textTheme.bodyMedium)
-                .animate()
-                .fade()
-                .slideY(
-                  duration: const Duration(milliseconds: 200),
-                  begin: 1,
-                  curve: Curves.easeInSine,
-                ),
-            5.verticalSpace,
-            Text(
-              '\$${(product.price ?? 0).toStringAsFixed(2)}',
-              style: theme.textTheme.displaySmall,
-            )
-                .animate()
-                .fade()
-                .slideY(
-                  duration: const Duration(milliseconds: 200),
-                  begin: 2,
-                  curve: Curves.easeInSine,
-                ),
-          ],
-        ),
+          ),
+          10.verticalSpace,
+          Text(
+            product.name ?? '',
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.bodyMedium,
+          ).animate().fade().slideY(
+                duration: const Duration(milliseconds: 200),
+                begin: 1,
+                curve: Curves.easeInSine,
+              ),
+          5.verticalSpace,
+          Text(
+            '\$${(product.price ?? 0).toStringAsFixed(2)}',
+            style: theme.textTheme.displaySmall,
+          ).animate().fade().slideY(
+                duration: const Duration(milliseconds: 200),
+                begin: 1.4,
+                curve: Curves.easeInSine,
+              ),
+        ],
       ),
     );
+  }
+
+  String? _resolveImageUrl(String? raw) {
+    if (raw == null || raw.isEmpty) {
+      return null;
+    }
+    if (raw.startsWith('http')) {
+      return raw;
+    }
+    return 'http://localhost:8080/uploads/$raw';
   }
 }

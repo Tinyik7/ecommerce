@@ -13,7 +13,7 @@ class ProfileDetailView extends GetView<ProfileDetailController> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Профиль'),
+        title: Text('profile_title'.tr),
       ),
       body: GetBuilder<ProfileDetailController>(
         builder: (c) {
@@ -25,77 +25,109 @@ class ProfileDetailView extends GetView<ProfileDetailController> {
           return RefreshIndicator(
             onRefresh: c.refreshUser,
             child: ListView(
-              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 24.h),
+              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
               children: [
-                CircleAvatar(
-                  radius: 40.r,
-                  child: Text(
-                    user.username.isNotEmpty
-                        ? user.username[0].toUpperCase()
-                        : '?',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      color: Colors.white,
-                    ),
-                  ),
+                _ProfileHeader(
+                  username: user.username,
+                  email: user.email,
                 ),
-                16.verticalSpace,
-                Center(
-                  child: Column(
-                    children: [
-                      Text(
-                        user.username,
-                        style: theme.textTheme.titleLarge,
-                      ),
-                      4.verticalSpace,
-                      Text(
-                        user.email,
-                        style: theme.textTheme.bodyMedium,
-                      ),
-                    ],
-                  ),
-                ),
-                24.verticalSpace,
+                18.verticalSpace,
                 _InfoTile(
-                  title: 'Роль',
+                  title: 'profile_role'.tr,
                   value: user.role?.toUpperCase() ?? 'USER',
                 ),
                 _InfoTile(
-                  title: 'ID пользователя',
+                  title: 'profile_user_id'.tr,
                   value: user.id.toString(),
                 ),
                 if (user.name != null && user.name!.isNotEmpty)
                   _InfoTile(
-                    title: 'Имя',
+                    title: 'profile_name'.tr,
                     value: user.name!,
                   ),
                 if (user.createdAt != null && user.createdAt!.isNotEmpty)
                   _InfoTile(
-                    title: 'Создан',
+                    title: 'profile_created'.tr,
                     value: user.createdAt!,
                   ),
-                12.verticalSpace,
+                10.verticalSpace,
                 _ActionButton(
-                  title: 'Редактировать профиль',
-                  icon: Icons.edit,
+                  title: 'profile_edit'.tr,
+                  icon: Icons.edit_outlined,
                   onTap: () => _openEditProfile(context, c),
                   isLoading: c.isSaving,
                 ),
-                12.verticalSpace,
+                10.verticalSpace,
                 _ActionButton(
-                  title: 'Сменить пароль',
-                  icon: Icons.lock,
+                  title: 'profile_change_password'.tr,
+                  icon: Icons.lock_reset_rounded,
                   onTap: () => _openChangePassword(context, c),
                   isLoading: c.isChangingPassword,
                 ),
-                20.verticalSpace,
+                16.verticalSpace,
                 Text(
-                  'Свайпните вниз, чтобы обновить данные из сервера.',
+                  'profile_refresh_hint'.tr,
                   style: theme.textTheme.bodySmall,
                 ),
               ],
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+class _ProfileHeader extends StatelessWidget {
+  final String username;
+  final String email;
+
+  const _ProfileHeader({required this.username, required this.email});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = context.theme;
+    return Container(
+      padding: EdgeInsets.all(16.r),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            theme.primaryColor.withValues(alpha: 0.16),
+            theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20.r),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 30.r,
+            backgroundColor: theme.primaryColor,
+            child: Text(
+              username.isNotEmpty ? username[0].toUpperCase() : '?',
+              style: theme.textTheme.titleLarge?.copyWith(color: Colors.white),
+            ),
+          ),
+          14.horizontalSpace,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  username,
+                  style: theme.textTheme.titleLarge,
+                ),
+                2.verticalSpace,
+                Text(
+                  email,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodyMedium,
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -111,25 +143,23 @@ class _InfoTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = context.theme;
     return Container(
-      margin: EdgeInsets.only(bottom: 12.h),
-      padding: EdgeInsets.all(16.w),
+      margin: EdgeInsets.only(bottom: 10.h),
+      padding: EdgeInsets.all(14.w),
       decoration: BoxDecoration(
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(16.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        border: Border.all(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.45),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             title,
-            style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
           ),
           4.verticalSpace,
           Text(
@@ -174,7 +204,8 @@ class _ActionButton extends StatelessWidget {
   }
 }
 
-void _openEditProfile(BuildContext context, ProfileDetailController controller) {
+void _openEditProfile(
+    BuildContext context, ProfileDetailController controller) {
   final user = controller.user;
   final nameCtrl = TextEditingController(text: user?.name ?? '');
   final usernameCtrl = TextEditingController(text: user?.username ?? '');
@@ -182,9 +213,13 @@ void _openEditProfile(BuildContext context, ProfileDetailController controller) 
   final formKey = GlobalKey<FormState>();
 
   String? validateEmail(String? value) {
-    if (value == null || value.trim().isEmpty) return null;
+    if (value == null || value.trim().isEmpty) {
+      return null;
+    }
     final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
-    if (!emailRegex.hasMatch(value.trim())) return 'Некорректный email';
+    if (!emailRegex.hasMatch(value.trim())) {
+      return 'validation_invalid_email'.tr;
+    }
     return null;
   }
 
@@ -204,27 +239,27 @@ void _openEditProfile(BuildContext context, ProfileDetailController controller) 
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Редактировать профиль',
+              Text('profile_edit_title'.tr,
                   style: context.textTheme.titleLarge),
               16.verticalSpace,
               TextFormField(
                 controller: usernameCtrl,
-                decoration: const InputDecoration(labelText: 'Имя пользователя'),
+                decoration: InputDecoration(labelText: 'auth_username'.tr),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) return null;
-                  if (value.trim().length < 3) return 'Минимум 3 символа';
+                  if (value.trim().length < 3) return 'validation_min_3'.tr;
                   return null;
                 },
               ),
               12.verticalSpace,
               TextFormField(
                 controller: nameCtrl,
-                decoration: const InputDecoration(labelText: 'Имя'),
+                decoration: InputDecoration(labelText: 'profile_name'.tr),
               ),
               12.verticalSpace,
               TextFormField(
                 controller: emailCtrl,
-                decoration: const InputDecoration(labelText: 'Email'),
+                decoration: InputDecoration(labelText: 'auth_email'.tr),
                 validator: validateEmail,
               ),
               20.verticalSpace,
@@ -246,7 +281,7 @@ void _openEditProfile(BuildContext context, ProfileDetailController controller) 
                             Get.back();
                           }
                         },
-                  child: const Text('Сохранить'),
+                  child: Text('profile_save'.tr),
                 ),
               ),
             ],
@@ -258,7 +293,9 @@ void _openEditProfile(BuildContext context, ProfileDetailController controller) 
 }
 
 void _openChangePassword(
-    BuildContext context, ProfileDetailController controller) {
+  BuildContext context,
+  ProfileDetailController controller,
+) {
   final currentCtrl = TextEditingController();
   final newCtrl = TextEditingController();
   final formKey = GlobalKey<FormState>();
@@ -279,16 +316,19 @@ void _openChangePassword(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Сменить пароль', style: context.textTheme.titleLarge),
+              Text(
+                'profile_change_password'.tr,
+                style: context.textTheme.titleLarge,
+              ),
               16.verticalSpace,
               TextFormField(
                 controller: currentCtrl,
                 obscureText: true,
                 decoration:
-                    const InputDecoration(labelText: 'Текущий пароль'),
+                    InputDecoration(labelText: 'profile_current_password'.tr),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Введите текущий пароль';
+                    return 'validation_required_current_password'.tr;
                   }
                   return null;
                 },
@@ -297,12 +337,12 @@ void _openChangePassword(
               TextFormField(
                 controller: newCtrl,
                 obscureText: true,
-                decoration: const InputDecoration(labelText: 'Новый пароль'),
+                decoration: InputDecoration(labelText: 'auth_new_password'.tr),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Введите новый пароль';
+                    return 'validation_required_new_password'.tr;
                   }
-                  if (value.length < 6) return 'Минимум 6 символов';
+                  if (value.length < 6) return 'validation_min_6'.tr;
                   return null;
                 },
               ),
@@ -324,7 +364,7 @@ void _openChangePassword(
                             Get.back();
                           }
                         },
-                  child: const Text('Обновить пароль'),
+                  child: Text('profile_update_password'.tr),
                 ),
               ),
             ],

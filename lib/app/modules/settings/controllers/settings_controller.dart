@@ -39,8 +39,8 @@ class SettingsController extends GetxController {
 
     Get.offAllNamed(Routes.login);
     Get.snackbar(
-      'До встречи 👋',
-      'Вы вышли из аккаунта',
+      'logout_bye_title'.tr,
+      'logout_bye_message'.tr,
       snackPosition: SnackPosition.BOTTOM,
     );
   }
@@ -56,10 +56,9 @@ class SettingsController extends GetxController {
 
   void openHelp() {
     Get.defaultDialog(
-      title: 'Поддержка',
-      middleText:
-          'Напишите на support@echoes.app или в Telegram @EchoesSupport, чтобы получить помощь.',
-      textConfirm: 'Ок',
+      title: 'support_title'.tr,
+      middleText: 'support_message'.tr,
+      textConfirm: 'ok'.tr,
       confirmTextColor: Colors.white,
       onConfirm: Get.back,
     );

@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 
 import 'package:get/get.dart';
 
@@ -9,6 +9,7 @@ import '../../../data/services/api_client.dart';
 
 class FavoritesController extends GetxController {
   List<ProductModel> products = <ProductModel>[];
+  final RxBool isLoading = false.obs;
 
   final String favoritesUrl = 'http://localhost:8080/api/v1/favorites';
   int get _userId => MySharedPref.getInt('user_id') ?? 0;
@@ -24,6 +25,8 @@ class FavoritesController extends GetxController {
     if (userId == 0) return;
 
     try {
+      isLoading.value = true;
+      update();
       final response = await ApiClient.get(
         Uri.parse('$favoritesUrl/$userId'),
         headers: ApiClient.authHeaders(),
@@ -51,6 +54,7 @@ class FavoritesController extends GetxController {
           .map((product) => product..isFavorite = true)
           .toList();
     } finally {
+      isLoading.value = false;
       update();
     }
   }
@@ -93,5 +97,3 @@ class FavoritesController extends GetxController {
     } catch (_) {}
   }
 }
-
-

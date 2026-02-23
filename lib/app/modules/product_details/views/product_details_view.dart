@@ -17,14 +17,7 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
   Widget build(BuildContext context) {
     final theme = context.theme;
     final product = controller.product;
-
-    // 🧠 Исправляем путь для изображений из uploads
-    final imageUrl = (product.image != null && product.image!.isNotEmpty)
-        ? (product.image!.startsWith('http')
-            ? product.image! // если уже полный URL
-            : 'http://localhost:8080/uploads/${product.image}') // backend путь
-        : null;
-
+    final imageUrl = _resolveImageUrl(product.image);
     final price = product.price ?? 0;
     final rating = product.rating;
     final reviews = product.reviews;
@@ -35,82 +28,89 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Stack(
-                children: [
-                  Container(
-                    width: double.infinity,
-                    height: 450.h,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEDF1FA),
-                      borderRadius: BorderRadius.only(
-                        bottomLeft: Radius.circular(30.r),
-                        bottomRight: Radius.circular(30.r),
+              SizedBox(
+                height: 380.h,
+                child: Stack(
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.only(
+                          bottomLeft: Radius.circular(30.r),
+                          bottomRight: Radius.circular(30.r),
+                        ),
                       ),
                     ),
-                  ),
-                  Positioned(
-                    top: 30.h,
-                    left: 20.w,
-                    right: 20.w,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        RoundedButton(
-                          onPressed: () => Get.back(),
-                          child: SvgPicture.asset(
-                            Constants.backArrowIcon,
-                            fit: BoxFit.none,
-                          ),
-                        ),
-                        GetBuilder<ProductDetailsController>(
-                          id: 'FavoriteButton',
-                          builder: (_) {
-                            final isFavorite =
-                                controller.product.isFavorite ?? false;
-                            return RoundedButton(
-                              onPressed: controller.onFavoriteButtonPressed,
-                              child: SvgPicture.asset(
-                                isFavorite
-                                    ? Constants.favFilledIcon
-                                    : Constants.favOutlinedIcon,
-                                width: 16.w,
-                                height: 15.h,
-                                colorFilter: isFavorite
-                                    ? null
-                                    : const ColorFilter.mode(
-                                        Colors.white, BlendMode.srcIn),
-                              ),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  /// 🖼️ Загрузка изображения из backend
-                  if (imageUrl != null)
                     Positioned(
-                      right: product.id == 2 ? 0 : 30.w,
-                      bottom: -350.h,
-                      child: Image.network(
-                        imageUrl,
-                        height: 700.h,
-                        fit: BoxFit.contain,
-                        errorBuilder: (_, __, ___) => const Icon(
-                          Icons.broken_image,
-                          size: 120,
-                          color: Colors.grey,
-                        ),
-                      )
-                          .animate()
-                          .slideX(
-                            duration: const Duration(milliseconds: 300),
-                            begin: 1,
-                            curve: Curves.easeInSine,
-                          )
-                          .fadeIn(),
+                      top: 18.h,
+                      left: 20.w,
+                      right: 20.w,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          RoundedButton(
+                            onPressed: () => Get.back(),
+                            child: SvgPicture.asset(
+                              Constants.backArrowIcon,
+                              fit: BoxFit.none,
+                            ),
+                          ),
+                          GetBuilder<ProductDetailsController>(
+                            id: 'FavoriteButton',
+                            builder: (_) {
+                              final isFavorite =
+                                  controller.product.isFavorite ?? false;
+                              return RoundedButton(
+                                onPressed: controller.onFavoriteButtonPressed,
+                                child: SvgPicture.asset(
+                                  isFavorite
+                                      ? Constants.favFilledIcon
+                                      : Constants.favOutlinedIcon,
+                                  width: 16.w,
+                                  height: 15.h,
+                                  colorFilter: isFavorite
+                                      ? null
+                                      : const ColorFilter.mode(
+                                          Colors.white,
+                                          BlendMode.srcIn,
+                                        ),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
                     ),
-                ],
+                    Positioned.fill(
+                      child: Padding(
+                        padding: EdgeInsets.fromLTRB(30.w, 70.h, 30.w, 20.h),
+                        child: imageUrl == null
+                            ? const Center(
+                                child: Icon(
+                                  Icons.image_not_supported_outlined,
+                                  size: 80,
+                                ),
+                              )
+                            : Image.network(
+                                imageUrl,
+                                fit: BoxFit.contain,
+                                errorBuilder: (_, __, ___) => const Center(
+                                  child: Icon(
+                                    Icons.broken_image,
+                                    size: 100,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              )
+                                .animate()
+                                .fadeIn(
+                                    duration: const Duration(milliseconds: 250))
+                                .slideY(begin: 0.08),
+                      ),
+                    ),
+                  ],
+                ),
               ),
               20.verticalSpace,
               Padding(
@@ -118,7 +118,7 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
                 child: Text(
                   product.name ?? '',
                   style: theme.textTheme.bodyLarge,
-                ).animate().fade().slideX(begin: -1),
+                ).animate().fade().slideX(begin: -0.15),
               ),
               10.verticalSpace,
               Padding(
@@ -129,7 +129,7 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
                       '\$${price.toStringAsFixed(2)}',
                       style: theme.textTheme.displayMedium,
                     ),
-                    30.horizontalSpace,
+                    24.horizontalSpace,
                     const Icon(Icons.star_rounded, color: Color(0xFFFFC542)),
                     5.horizontalSpace,
                     Text(
@@ -146,47 +146,45 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
                           theme.textTheme.bodyMedium?.copyWith(fontSize: 16.sp),
                     ),
                   ],
-                ).animate().fade().slideX(begin: -1),
+                ).animate().fade().slideX(begin: -0.15),
               ),
               20.verticalSpace,
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20.w),
                 child: Text(
-                  'Choose your size:',
+                  'choose_size'.tr,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     fontSize: 18.sp,
                     fontWeight: FontWeight.bold,
                   ),
-                ).animate().fade().slideX(begin: -1),
+                ).animate().fade().slideX(begin: -0.15),
               ),
               10.verticalSpace,
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20.w),
                 child: GetBuilder<ProductDetailsController>(
                   id: 'Size',
-                  builder: (_) => Row(
+                  builder: (_) => Wrap(
+                    spacing: 10.w,
+                    runSpacing: 10.h,
                     children: [
                       for (final size in ['S', 'M', 'L', 'XL'])
-                        Padding(
-                          padding: EdgeInsets.only(right: 10.w),
-                          child: SizeItem(
-                            onPressed: () =>
-                                controller.changeSelectedSize(size),
-                            label: size,
-                            selected: controller.selectedSize == size,
-                          ),
+                        SizeItem(
+                          onPressed: () => controller.changeSelectedSize(size),
+                          label: size,
+                          selected: controller.selectedSize == size,
                         ),
                     ],
-                  ).animate().fade().slideX(begin: -1),
+                  ).animate().fade().slideX(begin: -0.15),
                 ),
               ),
-              20.verticalSpace,
+              24.verticalSpace,
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 30.w),
                 child: GetBuilder<ProductDetailsController>(
                   id: 'CartButton',
                   builder: (_) => CustomButton(
-                    text: product.inCart ? 'In Cart' : 'Add to Cart',
+                    text: product.inCart ? 'in_cart'.tr : 'add_to_cart'.tr,
                     onPressed:
                         product.inCart ? null : controller.onAddToCartPressed,
                     fontSize: 16.sp,
@@ -197,16 +195,25 @@ class ProductDetailsView extends GetView<ProductDetailsController> {
                     shadowOpacity: 0.3,
                     shadowBlurRadius: 4,
                     shadowSpreadRadius: 0,
-                  ).animate().fade().slideY(begin: 1),
+                    disabled: product.inCart,
+                  ).animate().fade().slideY(begin: 0.2),
                 ),
               ),
+              24.verticalSpace,
             ],
           ),
         ),
       ),
     );
   }
+
+  String? _resolveImageUrl(String? raw) {
+    if (raw == null || raw.isEmpty) {
+      return null;
+    }
+    if (raw.startsWith('http')) {
+      return raw;
+    }
+    return 'http://localhost:8080/uploads/$raw';
+  }
 }
-
-
-
