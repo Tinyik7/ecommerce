@@ -37,10 +37,6 @@ public final class ProductSpecifications {
             spec = spec.and(ratingGreaterThanOrEqual(filter.minRating()));
         }
 
-        if (Boolean.TRUE.equals(filter.onlyFavorites())) {
-            spec = spec.and(onlyFavorites());
-        }
-
         if (Boolean.TRUE.equals(filter.inStock())) {
             spec = spec.and(inStock());
         }
@@ -69,10 +65,6 @@ public final class ProductSpecifications {
 
     private static Specification<Product> ratingGreaterThanOrEqual(Double minRating) {
         return (root, cq, cb) -> cb.greaterThanOrEqualTo(root.get("rating"), minRating);
-    }
-
-    private static Specification<Product> onlyFavorites() {
-        return (root, cq, cb) -> cb.isTrue(root.get("isFavorite"));
     }
 
     private static Specification<Product> inStock() {

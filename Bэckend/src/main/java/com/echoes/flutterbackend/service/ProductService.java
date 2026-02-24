@@ -7,12 +7,17 @@ import com.echoes.flutterbackend.dto.ProductRealtimeEvent;
 import com.echoes.flutterbackend.dto.ProductRequest;
 import com.echoes.flutterbackend.dto.ProductResponse;
 import com.echoes.flutterbackend.entity.Product;
+import com.echoes.flutterbackend.repository.FavoriteRepository;
 import com.echoes.flutterbackend.repository.ProductRepository;
+import com.echoes.flutterbackend.repository.UserRepository;
 import com.echoes.flutterbackend.repository.spec.ProductSpecifications;
 import com.echoes.flutterbackend.websocket.ProductUpdatesWebSocketHandler;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -24,28 +29,53 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
 @Transactional(readOnly = true)
 public class ProductService {
     private final ProductRepository repository;
+    private final FavoriteRepository favoriteRepository;
+    private final UserRepository userRepository;
     private final Path uploadDirectory;
     private final ProductUpdatesWebSocketHandler productUpdatesWebSocketHandler;
 
     public ProductService(ProductRepository repository,
+                          FavoriteRepository favoriteRepository,
+                          UserRepository userRepository,
                           ProductUpdatesWebSocketHandler productUpdatesWebSocketHandler,
                           @Value("${app.upload-dir:uploads}") String uploadDir) {
         this.repository = repository;
+        this.favoriteRepository = favoriteRepository;
+        this.userRepository = userRepository;
         this.productUpdatesWebSocketHandler = productUpdatesWebSocketHandler;
         this.uploadDirectory = Path.of(uploadDir).toAbsolutePath();
     }
 
     public PageResponse<ProductResponse> search(ProductFilter filter, Pageable pageable) {
-        final Page<Product> page = repository.findAll(
-                ProductSpecifications.withFilter(filter),
-                pageable
-        );
+        Specification<Product> spec = ProductSpecifications.withFilter(filter);
+
+        if (filter != null && Boolean.TRUE.equals(filter.onlyFavorites())) {
+            Optional<Long> userId = resolveAuthenticatedUserId();
+            if (userId.isEmpty()) {
+                return PageResponse.from(Page.empty(pageable));
+            }
+
+            List<Long> favoriteProductIds = favoriteRepository.findByUserId(userId.get()).stream()
+                    .map(f -> f.getProductId())
+                    .distinct()
+                    .toList();
+
+            if (favoriteProductIds.isEmpty()) {
+                return PageResponse.from(Page.empty(pageable));
+            }
+
+            spec = spec.and((root, cq, cb) -> root.get("id").in(favoriteProductIds));
+        }
+
+        final Page<Product> page = repository.findAll(spec, pageable);
         return PageResponse.from(page.map(ProductMapper::toResponse));
     }
 
@@ -104,5 +134,19 @@ public class ProductService {
         Path filePath = uploadDirectory.resolve(filename);
         Files.copy(image.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
         return "/uploads/" + filename;
+    }
+
+    private Optional<Long> resolveAuthenticatedUserId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return Optional.empty();
+        }
+
+        Object principal = authentication.getPrincipal();
+        if (!(principal instanceof String email) || email.isBlank()) {
+            return Optional.empty();
+        }
+
+        return userRepository.findByEmail(email).map(u -> u.getId());
     }
 }

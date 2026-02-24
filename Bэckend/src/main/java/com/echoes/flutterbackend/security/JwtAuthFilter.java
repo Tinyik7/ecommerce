@@ -4,6 +4,8 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import com.echoes.flutterbackend.entity.User;
+import com.echoes.flutterbackend.repository.UserRepository;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -14,14 +16,17 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.Optional;
 
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final UserRepository userRepository;
 
-    public JwtAuthFilter(JwtTokenProvider jwtTokenProvider) {
+    public JwtAuthFilter(JwtTokenProvider jwtTokenProvider, UserRepository userRepository) {
         this.jwtTokenProvider = jwtTokenProvider;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -37,7 +42,13 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
             if (jwtTokenProvider.validateToken(token)) {
                 String email = jwtTokenProvider.getUsernameFromToken(token);
-                String role = jwtTokenProvider.getRoleFromToken(token);
+                Optional<User> userOpt = userRepository.findByEmail(email);
+                if (userOpt.isEmpty()) {
+                    SecurityContextHolder.clearContext();
+                    filterChain.doFilter(request, response);
+                    return;
+                }
+                String role = userOpt.get().getRole();
 
                 java.util.Collection<? extends GrantedAuthority> authorities = role == null || role.isBlank()
                         ? Collections.<GrantedAuthority>emptyList()
